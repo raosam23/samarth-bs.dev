@@ -23,7 +23,7 @@
 .timeline::before {
   content: "";
   position: absolute;
-  left: 5px;
+  left: 7px;
   top: 8px;
   bottom: 8px;
   width: 1px;
@@ -45,13 +45,13 @@
 }
 
 .dot {
-  width: 11px;
-  height: 11px;
+  width: 15px;
+  height: 15px;
   border-radius: 50%;
-  background: var(--bg);
-  border: 1px solid var(--accent-soft);
-  box-shadow: 0 0 0 3px var(--bg), 0 0 12px rgba(168, 85, 247, 0.4);
-  margin-top: 6px;
+  background: #120926;
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
+  margin-top: 4px;
   z-index: 1;
   position: relative;
 }
@@ -75,6 +75,7 @@
   color: var(--text);
   margin: 0;
   letter-spacing: -0.01em;
+  transition: color 0.2s ease;
 }
 
 .meta {
@@ -89,4 +90,195 @@
   color: var(--text-dim);
   margin: 0;
   line-height: 1.6;
+}
+
+/* Expand button styled like hero section's primary cta but compact */
+.expandButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  padding: 5px 12px;
+  border-radius: 999px;
+  margin-top: 10px;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease, gap 0.25s ease;
+  line-height: 1;
+  outline: none;
+}
+
+.expandButton:hover {
+  background: transparent;
+  border-color: var(--accent);
+  color: var(--accent);
+  gap: 10px;
+}
+
+.expandButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.expandArrow {
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  color: inherit;
+  transition: transform 0.25s ease;
+  line-height: 1;
+}
+
+.expandButton:hover .expandArrow {
+  transform: translateX(2px);
+}
+
+/* Modern popup overlay */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(12, 8, 23, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.modalOverlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Modal box content */
+.modalContent {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 440px;
+  width: calc(100% - 32px);
+  position: relative;
+  transform: scale(0.92);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+}
+
+.modalOverlay.active .modalContent {
+  transform: scale(1);
+}
+
+.modalClose {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 300;
+  cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+  line-height: 1;
+  outline: none;
+}
+
+.modalClose:hover {
+  background: transparent;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.modalHeader {
+  margin-bottom: 28px;
+  padding-right: 24px;
+}
+
+.modalTitle {
+  font-family: var(--font-display), serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 6px;
+  letter-spacing: -0.015em;
+}
+
+.modalSubtitle {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin: 0;
+}
+
+/* Sub-timeline inside modal */
+.modalTimeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modalTimeline::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 10px;
+  bottom: 10px;
+  width: 1px;
+  background: var(--border);
+}
+
+.modalItem {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 12px;
+  position: relative;
+}
+
+.modalDot {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--bg-elev);
+  border: 2px solid var(--accent);
+  z-index: 1;
+  margin-top: 3px;
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
+}
+
+.modalRoleBody {
+  display: flex;
+  flex-direction: column;
+}
+
+.modalRoleTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 2px;
+}
+
+.modalRoleMeta {
+  font-size: 12px;
+  color: var(--accent-soft);
+  font-weight: 500;
 }
