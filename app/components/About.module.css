@@ -1,0 +1,19 @@
+.copy {
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.copy p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--text-muted);
+}
+
+.copy strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
