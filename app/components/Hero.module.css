@@ -122,6 +122,7 @@
   text-transform: uppercase;
   transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease, gap 0.25s ease;
   min-width: 170px;
+  line-height: 1;
 }
 
 .cta {
@@ -150,6 +151,10 @@
   gap: 16px;
 }
 
+.ctaText {
+  line-height: 1;
+}
+
 .ctaArrow {
   font-family: var(--font-mono), monospace;
   font-size: 14px;
@@ -158,9 +163,23 @@
   width: 1em;
   text-align: center;
   transition: transform 0.25s ease;
+  line-height: 1;
+  position: relative;
 }
 
-.cta:hover .ctaArrow,
+.cta .ctaArrow {
+  top: -2px; /* Nudge downwards arrow up slightly to align with uppercase text */
+  margin-right: -4px; /* Reduce visual gap caused by the character's right side-bearing */
+}
+
+.ctaGhost .ctaArrow {
+  top: -1px; /* Nudge horizontal arrow up slightly to align with uppercase text */
+}
+
+.cta:hover .ctaArrow {
+  transform: translateX(-3px);
+}
+
 .ctaGhost:hover .ctaArrow {
   transform: translateX(3px);
 }
