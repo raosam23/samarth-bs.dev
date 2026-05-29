@@ -5,6 +5,18 @@ export default function Hero(): React.ReactElement {
   return (
     <section id="top" className={styles.hero}>
       <div className={styles.frame}>
+
+        <div className={styles.right}>
+          <Image
+            src="/portrait.png"
+            alt="Samarth B S"
+            width={1448}
+            height={1086}
+            className={styles.portrait}
+            priority
+          />
+        </div>
+
         <div className={styles.left}>
           <h1 className={styles.name}>
             <span className={styles.firstName}>Samarth</span>
@@ -38,17 +50,6 @@ export default function Hero(): React.ReactElement {
           </div>
         </div>
 
-      </div>
-
-      <div className={styles.right}>
-        <Image
-          src="/portrait.png"
-          alt="Samarth B S"
-          width={1448}
-          height={1086}
-          className={styles.portrait}
-          priority
-        />
       </div>
     </section>
   );

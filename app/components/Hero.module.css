@@ -2,39 +2,50 @@
   position: relative;
   min-height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
   padding: 0;
   overflow: hidden;
   background: #120926;
 }
 
-/* Inner frame — text column sits on the left, photo (in .right) bleeds in from the right */
+/* True two-column flex row — portrait on left, text on right.
+   Gap between them is always fixed so proportions hold at any screen width. */
 .frame {
-  position: relative;
   display: flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: flex-start;
-  max-width: 1280px;
   width: 100%;
-  height: 100vh;
-  margin: 0 auto;
-  padding: 0 56px;
-  z-index: 3;
+  min-height: 100vh;
 }
 
-.left {
+/* Portrait column — fixed proportion of viewport */
+.right {
+  flex: 0 0 55vw;
+  max-width: 55vw;
+  height: 100vh;
   position: relative;
-  z-index: 5;
+  pointer-events: none;
+}
+
+.portrait {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: right bottom;
+}
+
+/* Text column — takes the rest, with consistent padding on both sides */
+.left {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 0;
-  max-width: 560px;
-  width: 100%;
+  justify-content: center;
+  padding: 0 56px 0 48px;
+  max-width: 600px;
+  z-index: 5;
 }
 
-/* Name — Outfit, dramatic weight contrast between "SAMARTH" (heavy) and "B S" (hairline).
-   Tight tracking, uppercase, single hard color. */
+/* Name */
 .name {
   font-family: var(--font-display), sans-serif;
   font-size: clamp(56px, 7.6vw, 112px);
@@ -56,7 +67,7 @@
   text-transform: uppercase;
 }
 
-/* Role row — short accent dash + uppercase mono caption */
+/* Role row */
 .roleRow {
   display: flex;
   align-items: center;
@@ -88,7 +99,7 @@
   margin: 0 0 44px;
 }
 
-/* Highlighted keywords — solid white + thin accent underline */
+/* Highlighted keywords */
 .mark {
   color: var(--text);
   font-weight: 600;
@@ -99,7 +110,7 @@
   padding-bottom: 1px;
 }
 
-/* CTA row — primary + ghost */
+/* CTA row */
 .ctaRow {
   display: inline-flex;
   align-items: center;
@@ -168,12 +179,12 @@
 }
 
 .cta .ctaArrow {
-  top: -2px; /* Nudge downwards arrow up slightly to align with uppercase text */
-  margin-right: -4px; /* Reduce visual gap caused by the character's right side-bearing */
+  top: -2px;
+  margin-right: -4px;
 }
 
 .ctaGhost .ctaArrow {
-  top: -1px; /* Nudge horizontal arrow up slightly to align with uppercase text */
+  top: -1px;
 }
 
 .cta:hover .ctaArrow {
@@ -184,77 +195,38 @@
   transform: translateX(3px);
 }
 
-/* Photo — full-bleed right, sharp, with a soft left-edge fade only (so it doesn't
-   ghost out behind the text but still blends into the page bg). */
-.right {
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 58vw;
-  max-width: 920px;
-  height: 100vh;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.portrait {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 78% 88%;
-  opacity: 1;
-  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-  -webkit-mask-image: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(0, 0, 0, 0.55) 22%,
-    rgba(0, 0, 0, 0.95) 45%,
-    rgba(0, 0, 0, 1) 65%
-  );
-  mask-image: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(0, 0, 0, 0.55) 22%,
-    rgba(0, 0, 0, 0.95) 45%,
-    rgba(0, 0, 0, 1) 65%
-  );
-}
-
+/* Tablet — stack vertically */
 @media (max-width: 1024px) {
   .hero {
     min-height: auto;
     padding: 120px 0 60px;
   }
   .frame {
-    display: flex;
     flex-direction: column;
     align-items: flex-start;
-    height: auto;
-    padding: 0 28px;
+    min-height: auto;
   }
-  .left { max-width: 100%; }
   .right {
-    position: relative;
-    right: 0;
-    top: 0;
+    flex: none;
+    max-width: 100%;
     width: 100%;
-    height: auto;
-    min-height: 420px;
-    margin-top: 40px;
-    justify-content: center;
+    height: 420px;
+    order: 2;
   }
   .portrait {
     object-position: center bottom;
     -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,1) 70%, transparent 100%);
     mask-image: linear-gradient(180deg, rgba(0,0,0,1) 70%, transparent 100%);
   }
+  .left {
+    max-width: 100%;
+    padding: 0 28px;
+    order: 1;
+  }
 }
 
 @media (max-width: 600px) {
   .hero { padding: 100px 0 40px; }
-  .right { min-height: 340px; }
+  .right { height: 340px; }
   .name { font-size: clamp(44px, 12vw, 64px); }
 }
