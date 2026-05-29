@@ -1,3 +1,29 @@
+.section {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #220e45;
+  padding: 60px 0;
+}
+
+.inner {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 40px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+}
+
 .lead {
   font-size: 17px;
   line-height: 1.7;
@@ -8,7 +34,7 @@
 
 .list {
   list-style: none;
-  margin: 0 0 80px;
+  margin: 0 0 16px;
   padding: 0;
 }
 
@@ -16,23 +42,61 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 0;
+  padding: 5px 0;
   border-bottom: 1px solid var(--border-soft);
   color: var(--text);
   transition: border-color 0.2s ease;
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-sans), sans-serif;
 }
 
 .row:hover {
   border-bottom-color: var(--accent-soft);
 }
 
+.rowLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rowRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.iconPlaceholder {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(168, 85, 247, 0.08);
+  border: 1px solid rgba(168, 85, 247, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-soft);
+  flex-shrink: 0;
+  transition: all 0.25s ease;
+}
+
+.iconPlaceholder svg {
+  width: 12px;
+  height: 12px;
+}
+
+.row:hover .iconPlaceholder {
+  background: rgba(168, 85, 247, 0.16);
+  border-color: rgba(168, 85, 247, 0.35);
+  color: var(--text);
+}
+
 .rowLabel {
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-dim);
+  transition: color 0.2s ease;
 }
 
 .row:hover .rowLabel {
@@ -42,8 +106,7 @@
 .rowValue {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 500;
   letter-spacing: -0.01em;
   color: var(--text);
@@ -63,10 +126,24 @@
   font-size: 12px;
   color: var(--text-dim);
   letter-spacing: 0.04em;
+  text-align: center;
+  width: 100%;
+  margin-top: 40px;
 }
 
 @media (max-width: 600px) {
   .rowValue {
-    font-size: 15px;
+    font-size: 14px;
+  }
+  
+  .iconPlaceholder {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+  }
+
+  .iconPlaceholder svg {
+    width: 14px;
+    height: 14px;
   }
 }
