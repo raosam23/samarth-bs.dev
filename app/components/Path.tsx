@@ -1,4 +1,4 @@
-import styles from "./Education.module.css";
+import styles from "./Path.module.css";
 
 interface Entry {
   readonly title: string;
@@ -9,7 +9,7 @@ interface Entry {
 const entries: ReadonlyArray<Entry> = [
   {
     title: "Executive Engineer",
-    sub: "Elektrobit · Bengaluru",
+    sub: "Elektrobit · Bengaluru / Kochi",
     meta: "2023 — Present",
   },
   {
@@ -29,12 +29,12 @@ const entries: ReadonlyArray<Entry> = [
   },
 ];
 
-export default function Education(): React.ReactElement {
+export default function Path(): React.ReactElement {
   return (
-    <section id="path" className="section">
-      <div className="container">
-        <span className="eyebrow">The path</span>
-        <h2 className="section-title">A short timeline.</h2>
+    <section id="path" className={styles.section}>
+      <div className={styles.inner}>
+        <span className="eyebrow">Path</span>
+        <h2 className="section-title">The Journey So Far.</h2>
 
         <ol className={styles.timeline}>
           {entries.map((e) => (

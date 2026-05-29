@@ -2,7 +2,7 @@ import Hero from "./components/Hero";
 import About from "./components/About";
 import Projects from "./components/Projects";
 import Skills from "./components/Skills";
-import Education from "./components/Education";
+import Path from "./components/Path";
 import Contact from "./components/Contact";
 
 export default function Home(): React.ReactElement {
@@ -12,7 +12,7 @@ export default function Home(): React.ReactElement {
       <About />
       <Projects />
       <Skills />
-      <Education />
+      <Path />
       <Contact />
     </main>
   );
