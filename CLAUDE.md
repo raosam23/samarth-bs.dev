@@ -68,6 +68,11 @@ bunx tsc --noEmit
 - Implement server-side logic in route handlers (`app/api/chat/route.ts`) to securely communicate with OpenRouter.
 - Never expose API keys (`OPENROUTER_API_KEY`) on the client side. Use server components or API routes.
 
+### General Rules
+- **No emojis** anywhere in the app, not in UI text, chips, buttons, labels, comments, or any user-facing content.
+- **No em dashes (—)** anywhere in the app, not in UI text, copy, comments, or code. Use a comma or rephrase instead.
+- **Only do what is explicitly asked.** Do not add extra features, styles, animations, or content on your own. If unsure about anything, ask for confirmation before proceeding.
+
 ### TypeScript Conventions
 - Explicitly type all variables, function arguments, and return types.
 - Avoid the use of `any`; define interfaces or types for API responses and component props.
