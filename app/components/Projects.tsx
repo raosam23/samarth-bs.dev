@@ -6,18 +6,23 @@ interface Project {
   readonly stack: ReadonlyArray<string>;
   readonly hrefFrontend?: string;
   readonly hrefBackend?: string;
-  readonly featured?: boolean;
 }
 
 const projects: ReadonlyArray<Project> = [
   {
     title: "IntelliPrep",
     blurb:
-      "An AI mock-interview app. Upload a resume + JD, get a fit-score, then sit through an interview run by an 8-node LangGraph agent — it asks questions, judges your answers, follows up when something feels off, and writes you a verdict at the end. Everything streams live.",
+      "An AI mock-interview app. Upload a resume + JD, get a fit-score, then sit through an interview run by an 8-node LangGraph agent. It asks questions, judges your answers, follows up when something feels off, and writes you a verdict at the end. Everything streams live.",
     stack: ["LangGraph", "FastAPI", "Next.js", "PostgreSQL", "WebSockets"],
     hrefFrontend: "https://github.com/raosam23/intelli-prep-frontend",
     hrefBackend: "https://github.com/raosam23/intelli-prep-backend",
-    featured: true,
+  },
+  {
+    title: "Choose your own Adventure",
+    blurb:
+      "An interactive story game with a React frontend and a FastAPI backend. Given a story title, it generates dynamic story content based on player choices using LangChain. Persists game state and story progression across sessions via SQLite.",
+    stack: ["LangChain", "FastAPI", "React", "SQLite"],
+    hrefFrontend: "https://github.com/raosam23/choose-your-own-adventure-frontend",
   },
   {
     title: "QueryNest",
@@ -30,7 +35,7 @@ const projects: ReadonlyArray<Project> = [
   {
     title: "Tactica",
     blurb:
-      "Sports-only chatbot. Each question goes through a 7-agent AutoGen panel — stats, storytelling, debate, tactics, predictions, moderation — that argues using pgvector RAG plus live Tavily MCP web search, before a Moderator agent writes the final answer with citations.",
+      "Sports-only chatbot. Each question goes through a 7-agent AutoGen panel (stats, storytelling, debate, tactics, predictions, moderation) that argues using pgvector RAG plus live Tavily MCP web search, before a Moderator agent writes the final answer with citations.",
     stack: ["AutoGen", "FastAPI", "Next.js", "pgvector", "MCP"],
     hrefFrontend: "https://github.com/raosam23/tactica-frontend",
     hrefBackend: "https://github.com/raosam23/tactica-backend",
@@ -55,15 +60,9 @@ function ProjectLinks({ p }: { p: Project }): React.ReactElement | null {
   );
 }
 
-function Card({
-  p,
-  className = "",
-}: {
-  p: Project;
-  className?: string;
-}): React.ReactElement {
+function Card({ p }: { p: Project }): React.ReactElement {
   return (
-    <article className={`${styles.card} ${className}`}>
+    <article className={styles.card}>
       <div className={styles.cardTop}>
         <h3 className={styles.title}>{p.title}</h3>
         <p className={styles.blurb}>{p.blurb}</p>
@@ -81,22 +80,16 @@ function Card({
 }
 
 export default function Projects(): React.ReactElement {
-  const featured = projects.find((p) => p.featured);
-  const rest = projects.filter((p) => !p.featured);
-
   return (
-    <section id="projects" className="section">
-      <div className="container">
-        <span className="eyebrow">Selected work</span>
-        <h2 className="section-title">Things I&apos;ve built.</h2>
+    <section id="projects" className={styles.section}>
+      <div className={styles.inner}>
+        <span className="eyebrow">Projects</span>
+        <h2 className={`section-title ${styles.heading}`}>Work & Experiments.</h2>
 
-        <div className={styles.bento}>
-          {featured ? <Card p={featured} className={styles.featured} /> : null}
-          <div className={styles.row}>
-            {rest.map((p) => (
-              <Card key={p.title} p={p} />
-            ))}
-          </div>
+        <div className={styles.grid}>
+          {projects.map((p) => (
+            <Card key={p.title} p={p} />
+          ))}
         </div>
       </div>
     </section>

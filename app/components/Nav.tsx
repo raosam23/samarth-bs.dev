@@ -5,7 +5,7 @@ import styles from "./Nav.module.css";
 
 const links: ReadonlyArray<{ href: string; label: string }> = [
   { href: "#about", label: "About" },
-  { href: "#projects", label: "Work" },
+  { href: "#projects", label: "Projects" },
   { href: "#skills", label: "Toolkit" },
   { href: "#path", label: "Path" },
   { href: "#contact", label: "Contact" },

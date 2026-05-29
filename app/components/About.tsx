@@ -36,7 +36,7 @@ export default function About(): React.ReactElement {
             </p>
 
             <p className={styles.para}>
-              I am a die-hard supporter of <strong>Royal Challengers Bengaluru</strong> and <strong>Chelsea Football Club</strong>.
+              Also, I am a die-hard supporter of <strong>Royal Challengers Bengaluru</strong> and <strong>Chelsea Football Club</strong>.
             </p>
 
             <p className={styles.para}>
