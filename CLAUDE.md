@@ -71,7 +71,7 @@ bunx tsc --noEmit
 ### General Rules
 - **No emojis** anywhere in the app, not in UI text, chips, buttons, labels, comments, or any user-facing content.
 - **No em dashes (—)** anywhere in the app, not in UI text, copy, comments, or code. Use a comma or rephrase instead.
-- **Only do what is explicitly asked.** Do not add extra features, styles, animations, or content on your own. If unsure about anything, ask for confirmation before proceeding.
+- **DO NOT ADD ANYTHING THAT IS NOT EXPLICITLY ASKED FOR.** No extra animations, hover effects, transitions, features, styles, or content unless the user specifically requests it. If unsure, ask first.
 
 ### TypeScript Conventions
 - Explicitly type all variables, function arguments, and return types.
