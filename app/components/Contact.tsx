@@ -137,7 +137,7 @@ export default function Contact(): React.ReactElement {
           <h2 className="section-title">Wanna Chat?</h2>
 
           <p className={styles.lead}>
-            Whether it's building with AI, arguing about
+            Whether it&apos;s building with AI, arguing about
             football, or debating the best episodes of The Office, my inbox is
             always open. Email is fastest, but feel free to ping me anywhere.
           </p>

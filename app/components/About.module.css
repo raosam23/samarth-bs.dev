@@ -38,12 +38,11 @@
 }
 
 
-/* First sentence gets more presence */
 .lead {
   margin: 0;
   font-size: 15px;
   line-height: 1.9;
-  color: var(--text);
+  color: var(--text-muted);
   font-weight: 400;
   max-width: 58ch;
 }

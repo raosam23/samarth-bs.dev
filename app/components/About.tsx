@@ -12,12 +12,12 @@ export default function About(): React.ReactElement {
           {/* Left - professional */}
           <div className={styles.main}>
             <p className={styles.lead}>
-              I'm an executive engineer at <strong>Elektrobit</strong> which is a global leader in
+              I&apos;m an executive engineer at <strong>Elektrobit</strong> which is a global leader in
               embedded and connected software solutions for the automotive industry.
             </p>
             <p className={styles.para}>
               I work on platform-level software that helps power the computer inside modern
-              vehicles. Currently, I'm also looking into the AI world, trying to understand
+              vehicles. Currently, I&apos;m also looking into the AI world, trying to understand
               it and integrate it with our software solutions.
             </p>
             <p className={styles.para}>
