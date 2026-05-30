@@ -70,10 +70,11 @@
 /* Mobile */
 @media (max-width: 768px) {
   .section {
-    height: 100vh;
-    height: 100dvh;
+    min-height: unset;
+    height: auto;
     padding: 48px 0;
-    overflow: hidden;
+    overflow: visible;
+    align-items: flex-start;
   }
 
   .heading {

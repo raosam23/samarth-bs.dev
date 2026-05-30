@@ -227,8 +227,11 @@
 
 /* Mobile — portrait on top showing face, text centered below */
 @media (max-width: 600px) {
+  .roleDash {
+    display: none;
+  }
   .hero {
-    padding: 72px 0 48px;
+    padding: 48px 0;
   }
   .frame {
     flex-direction: column;
