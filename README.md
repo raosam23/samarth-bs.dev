@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Samarth B S | Portfolio Website
 
-## Getting Started
+A clean, responsive, and minimalist developer portfolio built with Next.js (App Router), TypeScript, and CSS Modules. It showcases my work, projects, technical skills, and career path.
 
-First, run the development server:
+## Technologies Used
+* **Framework**: Next.js 16 (App Router)
+* **Language**: TypeScript
+* **Styling**: Vanilla CSS (CSS Modules)
+* **Assets**: Inline SVGs & custom static image icons
+* **Package Manager**: Bun (or npm)
 
+## Key Features
+* **Hero**: Clear introduction highlighting my work in automotive software and AI.
+* **About**: Concise bio focusing on my background, tech stack preferences, and personal interests.
+* **Projects**: Showcases key developer projects (e.g., LangGraph applications) with live source code links.
+* **Tech Stack**: Tightly formatted grid displaying my toolset across Agentic AI, Backend, Frontend, Databases, and Core Languages.
+* **Timeline Path**: An interactive career timeline featuring a modal popup mapping my promotions.
+* **Contact**: Tightly styled connection cards with custom SVG indicators for email and socials.
+
+## Local Development
+
+First, install the dependencies:
 ```bash
-npm run dev
+bun install
 # or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Next, run the development server:
+```bash
+bun run dev
+# or
+npm run dev
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Open [http://localhost:3000](http://localhost:3000) in your browser to view the portfolio.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Production Build
 
-## Learn More
+To build the optimized production bundle:
+```bash
+bun run build
+# or
+npm build
+```
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The app is ready for instant deployment on Vercel, Netlify, or any static hosting platform.
