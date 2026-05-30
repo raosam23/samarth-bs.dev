@@ -70,16 +70,34 @@
 /* Mobile */
 @media (max-width: 768px) {
   .section {
-    padding: 80px 0;
+    height: 100vh;
+    height: 100dvh;
+    padding: 48px 0;
+    overflow: hidden;
+  }
+
+  .heading {
+    margin-bottom: 20px;
   }
 
   .grid {
     grid-template-columns: 1fr;
-    gap: 40px 0;
+    gap: 12px 0;
   }
 
   .side {
     padding-left: 0;
-    padding-top: 40px;
+    padding-top: 0;
+    gap: 12px;
+  }
+
+  .main {
+    gap: 12px;
+  }
+
+  .lead,
+  .para {
+    font-size: 13px;
+    line-height: 1.55;
   }
 }

@@ -225,8 +225,49 @@
   }
 }
 
+/* Mobile — portrait on top showing face, text centered below */
 @media (max-width: 600px) {
-  .hero { padding: 100px 0 40px; }
-  .right { height: 340px; }
-  .name { font-size: clamp(44px, 12vw, 64px); }
+  .hero {
+    padding: 72px 0 48px;
+  }
+  .frame {
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .right {
+    order: 1;
+    width: 100%;
+    height: 260px;
+    flex: none;
+    max-width: 100%;
+  }
+  .portrait {
+    object-position: center top;
+    -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,1) 60%, transparent 100%);
+    mask-image: linear-gradient(180deg, rgba(0,0,0,1) 60%, transparent 100%);
+  }
+  .left {
+    order: 2;
+    padding: 16px 28px 0;
+    align-items: center;
+    text-align: center;
+    max-width: 100%;
+  }
+  .name {
+    font-size: clamp(40px, 11vw, 58px);
+    text-align: center;
+  }
+  .roleRow {
+    justify-content: center;
+  }
+  .tagline {
+    text-align: center;
+    max-width: 340px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .ctaRow {
+    justify-content: center;
+  }
 }

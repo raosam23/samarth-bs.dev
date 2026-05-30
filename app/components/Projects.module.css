@@ -109,7 +109,30 @@
 }
 
 @media (max-width: 720px) {
+  .section {
+    padding: 60px 0;
+    overflow: hidden;
+  }
+  .inner {
+    padding: 0 16px;
+    width: 100%;
+    box-sizing: border-box;
+  }
   .grid {
     grid-template-columns: 1fr;
+    width: 100%;
+  }
+  .card {
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+  }
+  .cardBottom {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .stack {
+    flex-wrap: wrap;
+    overflow: visible;
   }
 }

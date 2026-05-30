@@ -6,6 +6,33 @@
   padding: 60px 0;
 }
 
+@media (max-width: 720px) {
+  .section {
+    height: 100vh;
+    height: 100dvh;
+    min-height: unset;
+    padding: 48px 0;
+    overflow: hidden;
+  }
+
+  .inner {
+    padding: 0 20px;
+  }
+
+  .item {
+    padding: 10px 0;
+  }
+
+  .title {
+    font-size: 14px;
+  }
+
+  .sub,
+  .meta {
+    font-size: 11px;
+  }
+}
+
 .inner {
   max-width: 1200px;
   width: 100%;
