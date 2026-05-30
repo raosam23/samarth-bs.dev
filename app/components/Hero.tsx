@@ -29,10 +29,9 @@ export default function Hero(): React.ReactElement {
           </div>
 
           <p className={styles.tagline}>
-            Based in <span className={styles.mark}>Bengaluru</span>, Writing
-            automotive software at{" "}
-            <span className={styles.mark}>Elektrobit</span> during the day
-            and building{" "}
+            Based in <span className={styles.mark}>Bengaluru</span>, Writing{" "}
+            <span className={styles.mark}>automotive software</span> at work
+            during the day and building{" "}
             <span className={styles.mark}>multi-agent, LLM-based</span> web
             applications using <span className={styles.mark}>NextJs</span> during
             the night.
