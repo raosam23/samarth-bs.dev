@@ -177,11 +177,20 @@ const OR_HEADERS = {
   "X-Title": "Samarth BS Portfolio",
 };
 
-const MODELS = [
-  "openai/gpt-oss-120b:free",
+const DEFAULT_MODELS: string[] = [
   "google/gemma-4-31b-it:free",
   "google/gemma-4-26b-a4b-it:free",
+  "openrouter/free",
 ];
+
+function getModels(): string[] {
+  const fromEnv: string[] | undefined = process.env.OPENROUTER_MODELS
+    ?.split(",")
+    .map((s: string) => s.trim())
+    .filter((s: string) => s.length > 0);
+  if (fromEnv && fromEnv.length > 0) return fromEnv;
+  return DEFAULT_MODELS;
+}
 
 // ── Stream helper ─────────────────────────────────────────────────────────────
 
@@ -295,9 +304,11 @@ export async function POST(req: Request): Promise<Response> {
     ...trimmed,
   ];
 
-  // Try each model in order until one succeeds
+  // Try each model in order until one succeeds. On any non-OK response,
+  // log the failure and continue to the next model.
+  const models: string[] = getModels();
   let orRes: Response | null = null;
-  for (const model of MODELS) {
+  for (const model of models) {
     const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: OR_HEADERS,
@@ -313,11 +324,14 @@ export async function POST(req: Request): Promise<Response> {
       orRes = res;
       break;
     }
-    // 429 = rate limited, try next model; anything else = bail
-    if (res.status !== 429) break;
+    const errorBody: string = await res.text().catch(() => "");
+    console.error(
+      `OpenRouter model failed: ${model} status=${res.status} body=${errorBody}`
+    );
   }
 
   if (!orRes || !orRes.body) {
+    console.error("OpenRouter: all models failed", { models });
     return new Response(JSON.stringify({ error: "llm_error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
