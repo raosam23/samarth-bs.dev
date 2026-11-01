@@ -131,21 +131,31 @@ I also built an AI-driven Software Quality Prediction POC using LangChain and ve
 Career path: Graduate Engineer Trainee (Sep 2023) -> Associate Engineer (2024) -> Executive Engineer (2025-Present)
 
 --- PROJECTS ---
-1. IntelliPrep — AI mock-interview app. Upload a resume + JD, get a fit-score, then do a live interview with an 8-node LangGraph agent that asks questions, judges your answers, follows up when something feels off, and writes a verdict at the end. Everything streams live.
+1. IntelliPrep - AI mock-interview app. Upload a resume + JD, get a fit-score, then do a live interview with an 8-node LangGraph agent that asks questions, judges your answers, follows up when something feels off, and writes a verdict at the end. Everything streams live.
    Stack: LangGraph, FastAPI, Next.js, PostgreSQL, WebSockets
    GitHub: github.com/raosam23/intelli-prep-frontend | github.com/raosam23/intelli-prep-backend
 
-2. QueryNest — Research agent that writes its report as it works. A LangGraph pipeline searches the web, fact-checks what it finds, scores the sources, and streams a structured markdown report back to a Next.js frontend in real time.
+2. Tactica - Sports-only chatbot. Each question goes through a 7-agent Microsoft AutoGen panel (stats, storytelling, debate, tactics, predictions, moderation) that argues using pgvector RAG and live Tavily MCP web search, before a Moderator agent writes the final answer with citations.
+   Stack: AutoGen, FastAPI, Next.js, pgvector, MCP
+   GitHub: github.com/raosam23/tactica-frontend | github.com/raosam23/tactica-backend
+
+3. DocuCrew - Chat with your documents through a CrewAI crew. Upload PDFs, DOCX or Markdown into collections; an ingestion crew chunks and indexes them into ChromaDB, then a manager-led query crew answers with RAG + web search and streams a cited answer back over SSE.
+   Stack: CrewAI, FastAPI, Next.js, ChromaDB, PostgreSQL
+   GitHub: github.com/raosam23/docucrew-frontend | github.com/raosam23/docucrew-backend
+   Infra: github.com/raosam23/docucrew-infra
+
+4. QueryNest - Research agent that writes its report as it works. A LangGraph pipeline searches the web, fact-checks what it finds, scores the sources, and streams a structured markdown report back to a Next.js frontend in real time.
    Stack: LangGraph, FastAPI, Next.js
    GitHub: github.com/raosam23/query-nest-frontend | github.com/raosam23/query-nest-backend
 
-3. Choose your own Adventure — Interactive story game. Give it a title and it generates dynamic story content based on your choices using LangChain. Persists game state and story progression across sessions via SQLite.
+5. Synapse - Work in progress. An AI-assisted scrum app. Paste requirements and LangGraph agents turn them into a backlog, plan capacity-based 2-week sprints, and flag task risk. FastAPI backend and Next.js frontend in a single repo. No demo yet.
+   Stack: LangGraph, FastAPI, Next.js, PostgreSQL
+   Status: in progress
+   GitHub: github.com/raosam23/Synapse
+
+6. Choose your own Adventure - Interactive story game. Give it a title and it generates dynamic story content based on your choices using LangChain. Persists game state and story progression across sessions via SQLite.
    Stack: LangChain, FastAPI, React, SQLite
    GitHub: github.com/raosam23/choose-your-own-adventure-frontend
-
-4. Tactica — Sports-only chatbot. Each question goes through a 7-agent Microsoft AutoGen panel (stats, storytelling, debate, tactics, predictions, moderation) that argues using pgvector RAG and live Tavily MCP web search, before a Moderator agent writes the final answer with citations.
-   Stack: AutoGen, FastAPI, Next.js, pgvector, MCP
-   GitHub: github.com/raosam23/tactica-frontend | github.com/raosam23/tactica-backend
 
 --- SKILLS ---
 Agentic/Gen AI: LangChain, LangGraph, OpenAI Agents SDK, CrewAI, Microsoft AutoGen, MCP, RAG

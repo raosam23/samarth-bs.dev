@@ -44,11 +44,33 @@
   gap: 12px;
 }
 
+.titleRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
 .title {
   font-size: 20px;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--text);
+  margin: 0;
+}
+
+.statusPill {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--accent-soft);
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(168, 85, 247, 0.08);
+  border: 1px solid rgba(168, 139, 250, 0.22);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .blurb {
@@ -110,6 +132,8 @@
 
 @media (max-width: 720px) {
   .section {
+    min-height: auto;
+    height: auto;
     padding: 48px 0;
     overflow: hidden;
   }
@@ -127,6 +151,9 @@
     box-sizing: border-box;
     min-width: 0;
   }
+  .title {
+    font-size: 18px;
+  }
   .cardBottom {
     flex-wrap: wrap;
     gap: 8px;
@@ -134,5 +161,8 @@
   .stack {
     flex-wrap: wrap;
     overflow: visible;
+  }
+  .links {
+    width: 100%;
   }
 }
