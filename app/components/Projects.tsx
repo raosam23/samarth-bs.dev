@@ -6,6 +6,8 @@ interface Project {
   readonly stack: ReadonlyArray<string>;
   readonly hrefFrontend?: string;
   readonly hrefBackend?: string;
+  readonly hrefRepo?: string;
+  readonly status?: "in-progress";
 }
 
 const projects: ReadonlyArray<Project> = [
@@ -18,11 +20,20 @@ const projects: ReadonlyArray<Project> = [
     hrefBackend: "https://github.com/raosam23/intelli-prep-backend",
   },
   {
-    title: "Choose your own Adventure",
+    title: "Tactica",
     blurb:
-      "An interactive story game with a React frontend and a FastAPI backend. Given a story title, it generates dynamic story content based on player choices using LangChain. Persists game state and story progression across sessions via SQLite.",
-    stack: ["LangChain", "FastAPI", "React", "SQLite"],
-    hrefFrontend: "https://github.com/raosam23/choose-your-own-adventure-frontend",
+      "Sports-only chatbot. Each question goes through a 7-agent AutoGen panel (stats, storytelling, debate, tactics, predictions, moderation) that argues using pgvector RAG plus live Tavily MCP web search, before a Moderator agent writes the final answer with citations.",
+    stack: ["AutoGen", "FastAPI", "Next.js", "pgvector", "MCP"],
+    hrefFrontend: "https://github.com/raosam23/tactica-frontend",
+    hrefBackend: "https://github.com/raosam23/tactica-backend",
+  },
+  {
+    title: "DocuCrew",
+    blurb:
+      "Chat with your documents through a CrewAI crew. Upload PDFs, DOCX or Markdown into collections; an ingestion crew chunks and indexes them into ChromaDB, then a manager-led query crew answers with RAG + web search and streams a cited answer back over SSE.",
+    stack: ["CrewAI", "FastAPI", "Next.js", "ChromaDB", "PostgreSQL"],
+    hrefFrontend: "https://github.com/raosam23/docucrew-frontend",
+    hrefBackend: "https://github.com/raosam23/docucrew-backend",
   },
   {
     title: "QueryNest",
@@ -33,17 +44,24 @@ const projects: ReadonlyArray<Project> = [
     hrefBackend: "https://github.com/raosam23/query-nest-backend",
   },
   {
-    title: "Tactica",
+    title: "Synapse",
     blurb:
-      "Sports-only chatbot. Each question goes through a 7-agent AutoGen panel (stats, storytelling, debate, tactics, predictions, moderation) that argues using pgvector RAG plus live Tavily MCP web search, before a Moderator agent writes the final answer with citations.",
-    stack: ["AutoGen", "FastAPI", "Next.js", "pgvector", "MCP"],
-    hrefFrontend: "https://github.com/raosam23/tactica-frontend",
-    hrefBackend: "https://github.com/raosam23/tactica-backend",
+      "An AI-assisted scrum app. Paste requirements and agents turn them into a backlog, plan capacity-based 2-week sprints, and flag task risk. FastAPI backend with LangGraph agents and a Next.js frontend. Currently building it.",
+    stack: ["LangGraph", "FastAPI", "Next.js", "PostgreSQL"],
+    hrefRepo: "https://github.com/raosam23/Synapse",
+    status: "in-progress",
+  },
+  {
+    title: "Choose your own Adventure",
+    blurb:
+      "An interactive story game with a React frontend and a FastAPI backend. Given a story title, it generates dynamic story content based on player choices using LangChain. Persists game state and story progression across sessions via SQLite.",
+    stack: ["LangChain", "FastAPI", "React", "SQLite"],
+    hrefFrontend: "https://github.com/raosam23/choose-your-own-adventure-frontend",
   },
 ];
 
 function ProjectLinks({ p }: { p: Project }): React.ReactElement | null {
-  if (!p.hrefFrontend && !p.hrefBackend) return null;
+  if (!p.hrefFrontend && !p.hrefBackend && !p.hrefRepo) return null;
   return (
     <div className={styles.links}>
       {p.hrefFrontend ? (
@@ -56,6 +74,11 @@ function ProjectLinks({ p }: { p: Project }): React.ReactElement | null {
           backend ↗
         </a>
       ) : null}
+      {p.hrefRepo ? (
+        <a href={p.hrefRepo} target="_blank" rel="noopener noreferrer">
+          github ↗
+        </a>
+      ) : null}
     </div>
   );
 }
@@ -64,7 +87,12 @@ function Card({ p }: { p: Project }): React.ReactElement {
   return (
     <article className={styles.card}>
       <div className={styles.cardTop}>
-        <h3 className={styles.title}>{p.title}</h3>
+        <div className={styles.titleRow}>
+          <h3 className={styles.title}>{p.title}</h3>
+          {p.status === "in-progress" ? (
+            <span className={styles.statusPill}>In progress</span>
+          ) : null}
+        </div>
         <p className={styles.blurb}>{p.blurb}</p>
       </div>
       <div className={styles.cardBottom}>
