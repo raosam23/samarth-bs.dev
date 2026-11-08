@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 
 const SECTION_IDS = ["top", "about", "projects", "skills", "path", "contact"] as const;
 
 type SectionId = (typeof SECTION_IDS)[number];
-type EnterDirection = "down" | "up";
+
+const ENTER_SETTLE = 0.12;
+const DOWN_LEAD = 0.84;
+const UP_LEAD = 0.7;
+const UP_SPAN = 0.9;
 
 function isSectionId(value: string): value is SectionId {
   return (SECTION_IDS as readonly string[]).includes(value);
@@ -25,157 +29,207 @@ function contentOf(section: HTMLElement): HTMLElement {
   return first instanceof HTMLElement ? first : section;
 }
 
-function visibleAmount(rect: DOMRect, viewport: number): number {
-  const start = Math.max(rect.top, 0);
-  const end = Math.min(rect.bottom, viewport);
-  return Math.max(0, end - start);
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }
 
 function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
+function sectionTop(section: HTMLElement): number {
+  return section.getBoundingClientRect().top + window.scrollY;
+}
+
+function maxScroll(): number {
+  return Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+}
+
+function shiftDistance(): number {
+  return window.innerWidth <= 768 ? 28 : 48;
+}
+
 /**
- * Settles a section's inner content when that section arrives.
- * Backgrounds stay still. The first screen does not play on load.
- * Hash links jump, then play the same settle.
+ * Scroll and nav share one reveal: content fades and drifts until the
+ * section settles. Progress follows scroll position, so wheel, trackpad,
+ * and keyboard all move it. A nav click glides through the same range.
  */
 export default function SectionTransitions(): null {
-  useEffect(() => {
-    const visited = new Set<string>();
-    const endListeners = new WeakMap<HTMLElement, (event: AnimationEvent) => void>();
-    let lastIndex = 0;
-    let ignoreScroll = false;
-    const arrival = 32;
+  useLayoutEffect(() => {
+    const shown = new Set<string>();
+    let navGen = 0;
+    let reducedCleared = false;
 
-    const clearEnter = (section: HTMLElement): void => {
-      const el = contentOf(section);
-      const previous = endListeners.get(el);
-      if (previous) {
-        el.removeEventListener("animationend", previous);
-        endListeners.delete(el);
+    const clearContent = (el: HTMLElement): void => {
+      el.style.opacity = "";
+      el.style.transform = "";
+    };
+
+    const clearAll = (): void => {
+      for (const section of collectSections()) clearContent(contentOf(section));
+    };
+
+    const paint = (el: HTMLElement, progress: number, dir: 1 | -1): void => {
+      if (progress >= 0.999) {
+        clearContent(el);
+        return;
       }
-      el.classList.remove("section-enter-down", "section-enter-up");
+      const opacity = progress.toFixed(3);
+      const shift = (1 - progress) * shiftDistance() * dir;
+      const transform = `translate3d(0, ${shift.toFixed(2)}px, 0)`;
+      if (el.style.opacity !== opacity) el.style.opacity = opacity;
+      if (el.style.transform !== transform) el.style.transform = transform;
     };
 
-    const play = (section: HTMLElement, direction: EnterDirection): void => {
-      if (prefersReducedMotion()) return;
-      const el = contentOf(section);
-      const previous = endListeners.get(el);
-      if (previous) el.removeEventListener("animationend", previous);
+    const apply = (): void => {
+      if (prefersReducedMotion()) {
+        if (!reducedCleared) {
+          clearAll();
+          reducedCleared = true;
+        }
+        return;
+      }
+      reducedCleared = false;
 
-      el.classList.remove("section-enter-down", "section-enter-up");
-      void el.offsetWidth;
-
-      const className = direction === "down" ? "section-enter-down" : "section-enter-up";
-      const onEnd = (event: AnimationEvent): void => {
-        if (event.target !== el) return;
-        el.classList.remove("section-enter-down", "section-enter-up");
-        el.removeEventListener("animationend", onEnd);
-        endListeners.delete(el);
-      };
-      endListeners.set(el, onEnd);
-      el.addEventListener("animationend", onEnd);
-      el.classList.add(className);
-    };
-
-    const pruneOffscreen = (): void => {
       const viewport = window.innerHeight;
+      const settle = viewport * ENTER_SETTLE;
+      const upSpan = viewport * UP_SPAN;
+
       for (const section of collectSections()) {
-        const amount = visibleAmount(section.getBoundingClientRect(), viewport);
-        if (amount < 1) {
-          visited.delete(section.id);
-          clearEnter(section);
-        }
-      }
-    };
-
-    const captureCurrent = (): void => {
-      const viewport = window.innerHeight;
-      const sections = collectSections();
-      let focus = 0;
-
-      for (let index = 0; index < sections.length; index += 1) {
-        const section = sections[index];
-        if (!section) continue;
         const rect = section.getBoundingClientRect();
-        const amount = visibleAmount(rect, viewport);
-        if (amount < 1) {
-          visited.delete(section.id);
-          continue;
-        }
-        if (rect.top <= viewport * 0.42 && rect.bottom >= viewport * 0.42) focus = index;
-        if (amount >= arrival) visited.add(section.id);
-      }
+        const el = contentOf(section);
+        const onScreen = rect.bottom > 1 && rect.top < viewport - 1;
 
-      lastIndex = focus;
-    };
-
-    const evaluate = (): void => {
-      if (ignoreScroll) return;
-      const viewport = window.innerHeight;
-      const sections = collectSections();
-      let focus = lastIndex;
-
-      for (let index = 0; index < sections.length; index += 1) {
-        const section = sections[index];
-        if (!section) continue;
-        const rect = section.getBoundingClientRect();
-        const amount = visibleAmount(rect, viewport);
-
-        if (amount < 1) {
-          visited.delete(section.id);
-          clearEnter(section);
+        if (!onScreen) {
+          shown.delete(section.id);
+          paint(el, 0, rect.top >= viewport - 1 ? 1 : -1);
           continue;
         }
 
-        if (rect.top <= viewport * 0.42 && rect.bottom >= viewport * 0.42) focus = index;
-        if (amount < arrival || visited.has(section.id)) continue;
+        const visible =
+          Math.min(rect.bottom, viewport) - Math.max(rect.top, 0);
+        const headingFarAbove = rect.top < -viewport * 0.85;
+        if (headingFarAbove && visible > viewport * 0.55) {
+          shown.add(section.id);
+          paint(el, 1, 1);
+          continue;
+        }
 
-        visited.add(section.id);
-        const direction: EnterDirection = rect.top >= viewport * 0.5 ? "down" : "up";
-        play(section, direction);
+        if (shown.has(section.id)) {
+          paint(el, 1, 1);
+          continue;
+        }
+
+        let progress = 1;
+        let dir: 1 | -1 = 1;
+        if (rect.top >= 0) {
+          progress = rect.top <= settle ? 1 : (viewport - rect.top) / (viewport - settle);
+          dir = 1;
+        } else {
+          progress = (rect.top + upSpan) / upSpan;
+          dir = -1;
+        }
+        progress = clamp(progress, 0, 1);
+        if (progress >= 0.999) shown.add(section.id);
+        paint(el, progress, dir);
       }
-
-      lastIndex = focus;
     };
 
-    const jumpTo = (section: HTMLElement): void => {
+    const withInstantScroll = (run: () => void): void => {
       const root = document.documentElement;
       const previous = root.style.scrollBehavior;
       root.style.scrollBehavior = "auto";
-      section.scrollIntoView({ block: "start" });
+      run();
       root.style.scrollBehavior = previous;
     };
 
+    const playScroll = (to: number): void => {
+      const gen = ++navGen;
+      const root = document.documentElement;
+      root.style.scrollBehavior = "auto";
+      const fromY = window.scrollY;
+      const start = performance.now();
+      const duration = 680;
+
+      const step = (now: number): void => {
+        if (gen !== navGen) return;
+        const t = clamp((now - start) / duration, 0, 1);
+        const eased = 1 - (1 - t) ** 3;
+        window.scrollTo(0, fromY + (to - fromY) * eased);
+        apply();
+        if (t < 1) {
+          requestAnimationFrame(step);
+          return;
+        }
+        root.style.scrollBehavior = "";
+      };
+
+      requestAnimationFrame(step);
+    };
+
     const navigate = (id: SectionId, push: boolean): void => {
-      const sections = collectSections();
-      const index = sections.findIndex((section) => section.id === id);
-      const section = sections[index];
-      if (!section || index < 0) return;
+      const section = document.getElementById(id);
+      if (!section) return;
+
+      const dest = clamp(sectionTop(section), 0, maxScroll());
+      if (push) {
+        const nextHash = `#${id}`;
+        if (window.location.hash !== nextHash) history.pushState(null, "", nextHash);
+      }
+
+      if (prefersReducedMotion()) {
+        navGen += 1;
+        withInstantScroll(() => window.scrollTo(0, dest));
+        apply();
+        return;
+      }
+
+      if (Math.abs(window.scrollY - dest) < 2) {
+        apply();
+        return;
+      }
 
       const viewport = window.innerHeight;
       const rect = section.getBoundingClientRect();
-      const coversFocus = rect.top <= viewport * 0.42 && rect.bottom >= viewport * 0.42;
-      const direction: EnterDirection = index >= lastIndex ? "down" : "up";
+      const readingThis =
+        rect.top <= viewport * ENTER_SETTLE && rect.bottom >= viewport * 0.55;
 
-      ignoreScroll = true;
-      visited.add(id);
-      jumpTo(section);
-      if (!coversFocus) play(section, direction);
-      lastIndex = index;
-      pruneOffscreen();
-
-      if (push) {
-        const nextHash = `#${id}`;
-        if (window.location.hash !== nextHash) {
-          history.pushState(null, "", nextHash);
-        }
+      if (readingThis) {
+        shown.add(id);
+        playScroll(dest);
+        return;
       }
 
-      requestAnimationFrame(() => {
-        ignoreScroll = false;
-      });
+      const goingDown = dest > window.scrollY;
+      const lead = clamp(
+        goingDown ? dest - viewport * DOWN_LEAD : dest + viewport * UP_LEAD,
+        0,
+        maxScroll()
+      );
+      const low = Math.min(lead, dest);
+      const high = Math.max(lead, dest);
+      const inRange = window.scrollY >= low - 1 && window.scrollY <= high + 1;
+
+      shown.delete(id);
+      if (!inRange) {
+        withInstantScroll(() => window.scrollTo(0, lead));
+        apply();
+      }
+      playScroll(dest);
+    };
+
+    const onScroll = (): void => {
+      apply();
+    };
+
+    const stopNav = (): void => {
+      navGen += 1;
+      document.documentElement.style.scrollBehavior = "";
+    };
+
+    const onKeyDown = (event: KeyboardEvent): void => {
+      const keys = ["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End", " "];
+      if (keys.includes(event.key)) stopNav();
     };
 
     const onClick = (event: MouseEvent): void => {
@@ -198,16 +252,30 @@ export default function SectionTransitions(): null {
       navigate(isSectionId(raw) ? raw : "top", false);
     };
 
-    captureCurrent();
-    window.addEventListener("scroll", evaluate, { passive: true });
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onMotion = (): void => apply();
+
+    apply();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("wheel", stopNav, { passive: true });
+    window.addEventListener("touchmove", stopNav, { passive: true });
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("resize", onScroll);
     document.addEventListener("click", onClick);
     window.addEventListener("popstate", onPop);
+    motion.addEventListener("change", onMotion);
 
     return () => {
-      window.removeEventListener("scroll", evaluate);
+      navGen += 1;
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("wheel", stopNav);
+      window.removeEventListener("touchmove", stopNav);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("resize", onScroll);
       document.removeEventListener("click", onClick);
       window.removeEventListener("popstate", onPop);
-      for (const section of collectSections()) clearEnter(section);
+      motion.removeEventListener("change", onMotion);
+      clearAll();
     };
   }, []);
 
