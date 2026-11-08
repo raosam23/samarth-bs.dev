@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import styles from "./Nav.module.css";
+import { requestSection } from "./SectionTransitions";
 
 const links: ReadonlyArray<{ href: string; label: string }> = [
   { href: "#about", label: "About" },
@@ -60,13 +61,25 @@ export default function Nav(): React.ReactElement {
           href="#top"
           className={`${styles.brand} ${showBrand ? styles.visible : ""}`}
           aria-label="Back to top"
+          onClick={(event) => {
+            event.preventDefault();
+            requestSection("top");
+          }}
         >
           Samarth B S
         </a>
         <ul className={styles.links}>
           {links.map((l) => (
             <li key={l.href}>
-              <a href={l.href}>{l.label}</a>
+              <a
+                href={l.href}
+                onClick={(event) => {
+                  event.preventDefault();
+                  requestSection(l.href.slice(1));
+                }}
+              >
+                {l.label}
+              </a>
             </li>
           ))}
         </ul>
