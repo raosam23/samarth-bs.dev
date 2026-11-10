@@ -1,9 +1,10 @@
 import Image from "next/image";
 import styles from "./Hero.module.css";
+import Scene from "./Scene";
 
 export default function Hero(): React.ReactElement {
   return (
-    <section id="top" className={styles.hero}>
+    <Scene id="top" className={styles.hero}>
       <div className={styles.frame}>
 
         <div className={styles.right}>
@@ -33,8 +34,7 @@ export default function Hero(): React.ReactElement {
             <span className={styles.mark}>automotive software</span> at work
             during the day and building{" "}
             <span className={styles.mark}>multi-agent, LLM-based</span> web
-            applications using <span className={styles.mark}>NextJs</span> during
-            the night.
+            applications during the night.
           </p>
 
           <div className={styles.ctaRow}>
@@ -50,6 +50,6 @@ export default function Hero(): React.ReactElement {
         </div>
 
       </div>
-    </section>
+    </Scene>
   );
 }

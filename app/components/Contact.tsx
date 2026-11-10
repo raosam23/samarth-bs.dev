@@ -1,4 +1,5 @@
 import styles from "./Contact.module.css";
+import Scene from "./Scene";
 
 interface Link {
   readonly label: string;
@@ -130,7 +131,7 @@ function getIcon(label: string): React.ReactNode {
 
 export default function Contact(): React.ReactElement {
   return (
-    <section id="contact" className={styles.section}>
+    <Scene id="contact" className={styles.section}>
       <div className={styles.inner}>
         <div className={styles.content}>
           <span className="eyebrow">Contact</span>
@@ -177,6 +178,6 @@ export default function Contact(): React.ReactElement {
           © {new Date().getFullYear()} Samarth B S · Bengaluru
         </footer>
       </div>
-    </section>
+    </Scene>
   );
 }

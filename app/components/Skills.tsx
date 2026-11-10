@@ -1,4 +1,5 @@
 import styles from "./Skills.module.css";
+import Scene from "./Scene";
 
 interface SkillCategory {
   readonly title: string;
@@ -90,7 +91,7 @@ const categories: ReadonlyArray<SkillCategory> = [
 
 export default function Skills(): React.ReactElement {
   return (
-    <section id="skills" className={styles.section}>
+    <Scene id="skills" className={styles.section}>
       <div className={styles.inner}>
         <span className="eyebrow">Skills</span>
         <h2 className={`section-title ${styles.heading}`}>My Weapons of Choice.</h2>
@@ -125,6 +126,6 @@ export default function Skills(): React.ReactElement {
           ))}
         </div>
       </div>
-    </section>
+    </Scene>
   );
 }

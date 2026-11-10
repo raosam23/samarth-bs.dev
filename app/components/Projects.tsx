@@ -1,4 +1,5 @@
 import styles from "./Projects.module.css";
+import Scene from "./Scene";
 
 interface Project {
   readonly title: string;
@@ -109,7 +110,7 @@ function Card({ p }: { p: Project }): React.ReactElement {
 
 export default function Projects(): React.ReactElement {
   return (
-    <section id="projects" className={styles.section}>
+    <Scene id="projects" className={styles.section}>
       <div className={styles.inner}>
         <span className="eyebrow">Projects</span>
         <h2 className={`section-title ${styles.heading}`}>Work & Experiments.</h2>
@@ -120,6 +121,6 @@ export default function Projects(): React.ReactElement {
           ))}
         </div>
       </div>
-    </section>
+    </Scene>
   );
 }

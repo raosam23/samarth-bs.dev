@@ -1,8 +1,9 @@
 import styles from "./About.module.css";
+import Scene from "./Scene";
 
 export default function About(): React.ReactElement {
   return (
-    <section id="about" className={`section ${styles.section}`}>
+    <Scene id="about" className={`section ${styles.section}`}>
       <div className="container">
         <span className="eyebrow">About</span>
         <h2 className={`section-title ${styles.heading}`}>Me, in a Nutshell.</h2>
@@ -49,6 +50,6 @@ export default function About(): React.ReactElement {
 
         </div>
       </div>
-    </section>
+    </Scene>
   );
 }

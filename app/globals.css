@@ -35,7 +35,7 @@ body {
 body {
   position: relative;
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 main,
@@ -114,12 +114,119 @@ button {
   margin-bottom: 40px;
 }
 
+/* Each section keeps its own scroll height. A viewport-sized window sticks,
+   so every cover scales the same frame: same corners, gutters, and width.
+   Tall content slides inside that window before the cover starts. */
+section.scene {
+  position: relative;
+  z-index: 1;
+  background: var(--bg);
+}
+
+.scene-sticky {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  max-width: 100%;
+  height: 100vh;
+}
+
+.scene-scale {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  overflow: hidden;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+#top { z-index: 1; }
+#about { z-index: 2; }
+#projects { z-index: 3; }
+#skills { z-index: 4; }
+#path { z-index: 5; }
+#contact { z-index: 6; }
+
+.scene-sticky > .scene-scale > .scene-card {
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+  will-change: transform;
+}
+
+.scene-card[data-rise="on"] {
+  animation: scene-rise auto linear both;
+  animation-timeline: scroll(root block);
+}
+
+.scene-scale[data-pin="on"] {
+  animation: scene-pin auto linear both;
+  animation-timeline: scroll(root block);
+}
+
+.scene-dim {
+  position: absolute;
+  inset: 0;
+  background: #0c0817;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 8;
+  border-radius: inherit;
+}
+
+.scene-scale[data-pin="on"] > .scene-dim {
+  animation: scene-dim auto linear both;
+  animation-timeline: scroll(root block);
+}
+
+@keyframes scene-rise {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, var(--scene-rise), 0); }
+}
+
+@keyframes scene-pin {
+  from {
+    transform: scale(1);
+    border-radius: 0px;
+  }
+  to {
+    transform: scale(0.9);
+    border-radius: 28px;
+  }
+}
+
+@keyframes scene-dim {
+  from { opacity: 0; }
+  to { opacity: 0.36; }
+}
+
+html.scene-fallback .scene-scale,
+html.scene-fallback .scene-card,
+html.scene-fallback .scene-dim {
+  animation: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html,
   body { scroll-behavior: auto; }
   *,
   *::before,
   *::after { transition: none !important; animation: none !important; }
+  section.scene {
+    position: relative;
+    top: auto !important;
+    height: auto !important;
+    margin-bottom: 0 !important;
+  }
+  .scene-sticky {
+    position: relative;
+    top: auto;
+    height: auto;
+  }
+  .scene-scale {
+    height: auto;
+    overflow: visible;
+  }
 }
 
 @media (max-width: 768px) {
