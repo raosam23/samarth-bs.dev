@@ -109,6 +109,7 @@ export default function Nav(): React.ReactElement {
     document.body.appendChild(flyer);
 
     const reducedQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const phoneQuery = window.matchMedia("(max-width: 720px)");
     let titleRestBottom = 0;
     let measuring = false;
     let frame = 0;
@@ -430,10 +431,9 @@ export default function Nav(): React.ReactElement {
     };
 
     const showJumpShell = (progress: number): void => {
-      const arrived = progress >= 0.999;
-      const show = !arrived;
+      const show = progress < 0.999;
       if (flightTitle) flightTitle.style.visibility = show ? "visible" : "hidden";
-      if (!scrollOn) flyer.style.visibility = show ? "visible" : "hidden";
+      flyer.style.visibility = show ? "visible" : "hidden";
     };
 
     const renderFlight = (progress: number, jump: boolean): void => {
@@ -460,16 +460,15 @@ export default function Nav(): React.ReactElement {
       CSS.supports("animation-range: 0% 100%");
 
     const bindScrollAnimation = (el: HTMLElement, name: string, range: string): void => {
-      el.style.animationName = name;
-      el.style.animationDuration = "auto";
-      el.style.animationTimingFunction = "linear";
-      el.style.animationFillMode = "both";
+      el.style.animation = `${name} auto linear both`;
       el.style.setProperty("animation-timeline", "scroll(root block)");
       el.style.setProperty("animation-range", range);
     };
 
     const clearScrollAnimation = (el: HTMLElement): void => {
-      el.style.animationName = "none";
+      el.style.animation = "none";
+      el.style.removeProperty("animation-timeline");
+      el.style.removeProperty("animation-range");
     };
 
     const suspendScrollFlight = (): void => {
@@ -486,7 +485,6 @@ export default function Nav(): React.ReactElement {
       if (!scrollOn || !scrollShell || !scrollStyle) return;
       const range = scrollShell.dataset.range ?? "";
       scrollShell.style.visibility = "visible";
-      flyer.style.visibility = "visible";
       bindScrollAnimation(scrollShell, "name-flight-scroll", range);
       const slide = scrollShell.querySelector("[data-name-slide]");
       if (slide instanceof HTMLElement) bindScrollAnimation(slide, "name-slide-scroll", range);
@@ -605,6 +603,11 @@ export default function Nav(): React.ReactElement {
       const fitX = dest.width / natural.width;
       const fitY = dest.height / natural.height;
       const holdX = lerp(0.86, 0.36, 0.5);
+      const span = end - start;
+      const placed = (percent: number, tx: number, ty: number, scaleX: number, scaleY: number, opacity: number): string => {
+        const lift = (percent / 100) * span;
+        return `${percent}% { transform: translate3d(${tx.toFixed(2)}px, ${(ty + lift).toFixed(2)}px, 0) scale(${scaleX.toFixed(4)}, ${scaleY.toFixed(4)}); opacity: ${opacity}; }`;
+      };
       const samples: string[] = [];
       const steps = 16;
       for (let i = 0; i <= steps; i += 1) {
@@ -621,28 +624,25 @@ export default function Nav(): React.ReactElement {
         const squeeze = Math.max(settle, arrive);
         const scaleX = lerp(lerp(sc, sc * holdX, compress), fitX, squeeze);
         const scaleY = lerp(lerp(sc, sc * SQUASH, compress), fitY, squeeze);
-        const transform = `translate3d(${(x - fromCx).toFixed(2)}px, ${(py - fromCy).toFixed(2)}px, 0) scale(${scaleX.toFixed(4)}, ${scaleY.toFixed(4)})`;
+        const tx = x - fromCx;
+        const ty = py - fromCy;
         if (i === 0) {
-          samples.push(`0% { transform: ${transform}; opacity: 0; }`);
-          samples.push(`1% { transform: ${transform}; opacity: 1; }`);
+          samples.push(placed(0, tx, ty, scaleX, scaleY, 0));
+          samples.push(placed(1, tx, ty, scaleX, scaleY, 1));
         } else {
-          samples.push(`${(p * 100).toFixed(2)}% { transform: ${transform}; opacity: 1; }`);
+          samples.push(placed(Number((p * 100).toFixed(2)), tx, ty, scaleX, scaleY, 1));
         }
       }
       const endX = destCx - fromCx;
       const endY = destCy - fromCy;
-      samples.push(
-        `97% { transform: translate3d(${endX.toFixed(2)}px, ${endY.toFixed(2)}px, 0) scale(${fitX.toFixed(4)}, ${fitY.toFixed(4)}); opacity: 1; }`,
-      );
-      samples.push(
-        `100% { transform: translate3d(${endX.toFixed(2)}px, ${endY.toFixed(2)}px, 0) scale(${fitX.toFixed(4)}, ${fitY.toFixed(4)}); opacity: 0; }`,
-      );
+      samples.push(placed(97, endX, endY, fitX, fitY, 1));
+      samples.push(placed(100, endX, endY, fitX, fitY, 0));
 
       if (!scrollShell) {
         scrollShell = document.createElement("div");
         scrollShell.setAttribute("aria-hidden", "true");
         scrollShell.dataset.scrollFlight = "on";
-        flyer.appendChild(scrollShell);
+        document.body.appendChild(scrollShell);
       }
       scrollShell.replaceChildren();
       const clone = title.cloneNode(true);
@@ -662,16 +662,16 @@ export default function Nav(): React.ReactElement {
       const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
       const range = `${((start / max) * 100).toFixed(3)}% ${((end / max) * 100).toFixed(3)}%`;
       scrollShell.dataset.range = range;
-      scrollShell.style.position = "fixed";
+      scrollShell.style.position = "absolute";
       scrollShell.style.left = `${from.left}px`;
-      scrollShell.style.top = `${from.top}px`;
+      scrollShell.style.top = `${from.top + start}px`;
+      scrollShell.style.zIndex = "60";
       scrollShell.style.width = `${natural.width}px`;
       scrollShell.style.margin = "0";
       scrollShell.style.pointerEvents = "none";
       scrollShell.style.transformOrigin = "50% 50%";
       scrollShell.style.willChange = "transform, opacity";
       scrollShell.style.visibility = "visible";
-      flyer.style.visibility = "visible";
 
       if (!scrollStyle) {
         scrollStyle = document.createElement("style");
@@ -795,7 +795,8 @@ export default function Nav(): React.ReactElement {
     const onScroll = (): void => {
       const nextScrolled = window.scrollY > 80;
       setScrolled((previous) => (previous === nextScrolled ? previous : nextScrolled));
-      requestApply();
+      if (scrollOn && scrollKey !== "" && phoneQuery.matches && !reducedQuery.matches && !nameLock) return;
+      apply();
     };
 
     const onResize = (): void => {
@@ -855,8 +856,8 @@ export default function Nav(): React.ReactElement {
       flightGen += 1;
       jumpTween?.kill();
       title.style.opacity = "";
-      title.style.animationName = "";
-      brand.style.animationName = "";
+      clearScrollAnimation(title);
+      clearScrollAnimation(brand);
       linkList.style.transform = "";
       clearRig();
       scrollShell?.remove();
