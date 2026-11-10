@@ -127,7 +127,6 @@ export default function Nav(): React.ReactElement {
     let nameLock = false;
     let flightGen = 0;
     let jumpTween: { kill: () => void } | null = null;
-    let scrollShell: HTMLDivElement | null = null;
     let scrollStyle: HTMLStyleElement | null = null;
     let scrollKey = "";
     let scrollOn = false;
@@ -299,6 +298,11 @@ export default function Nav(): React.ReactElement {
     };
 
     const heroTitleBox = (): Box => {
+      const flight = title.getAttribute("data-name-flight");
+      const slide = title.querySelector("[data-name-slide]");
+      const slideNode = slide instanceof HTMLElement ? slide : null;
+      if (flight !== null) title.removeAttribute("data-name-flight");
+      if (slideNode) slideNode.removeAttribute("data-name-slide");
       const sticky = section.querySelector(".scene-sticky");
       const previousPosition = sticky instanceof HTMLElement ? sticky.style.position : "";
       if (sticky instanceof HTMLElement) sticky.style.position = "relative";
@@ -310,6 +314,8 @@ export default function Nav(): React.ReactElement {
         height: rect.height,
       };
       if (sticky instanceof HTMLElement) sticky.style.position = previousPosition;
+      if (flight !== null) title.setAttribute("data-name-flight", flight);
+      if (slideNode) slideNode.setAttribute("data-name-slide", "on");
       return box;
     };
 
@@ -459,37 +465,59 @@ export default function Nav(): React.ReactElement {
       CSS.supports("animation-timeline: scroll()") &&
       CSS.supports("animation-range: 0% 100%");
 
-    const bindScrollAnimation = (el: HTMLElement, name: string, range: string): void => {
-      el.style.animation = `${name} auto linear both`;
-      el.style.setProperty("animation-timeline", "scroll(root block)");
+    const nameSlide = (): HTMLElement | null => {
+      const span = title.querySelectorAll("span")[1];
+      return span instanceof HTMLElement ? span : null;
+    };
+
+    const navBar = (): HTMLElement | null => {
+      const node = brand.closest("nav");
+      return node instanceof HTMLElement ? node : null;
+    };
+
+    const setFlightRange = (el: HTMLElement, range: string): void => {
       el.style.setProperty("animation-range", range);
     };
 
-    const clearScrollAnimation = (el: HTMLElement): void => {
-      el.style.animation = "none";
-      el.style.removeProperty("animation-timeline");
+    const clearFlightRange = (el: HTMLElement): void => {
       el.style.removeProperty("animation-range");
     };
 
     const suspendScrollFlight = (): void => {
-      if (!scrollOn || !scrollShell) return;
-      scrollShell.style.visibility = "hidden";
-      clearScrollAnimation(scrollShell);
-      const slide = scrollShell.querySelector("[data-name-slide]");
-      if (slide instanceof HTMLElement) clearScrollAnimation(slide);
-      clearScrollAnimation(title);
-      clearScrollAnimation(brand);
+      if (!scrollOn) return;
+      title.removeAttribute("data-name-flight");
+      brand.removeAttribute("data-name-flight");
+      clearFlightRange(title);
+      clearFlightRange(brand);
+      const bar = navBar();
+      if (bar) {
+        bar.removeAttribute("data-name-flight");
+        clearFlightRange(bar);
+      }
+      const slide = nameSlide();
+      if (slide) {
+        slide.removeAttribute("data-name-slide");
+        clearFlightRange(slide);
+      }
     };
 
     const resumeScrollFlight = (): void => {
-      if (!scrollOn || !scrollShell || !scrollStyle) return;
-      const range = scrollShell.dataset.range ?? "";
-      scrollShell.style.visibility = "visible";
-      bindScrollAnimation(scrollShell, "name-flight-scroll", range);
-      const slide = scrollShell.querySelector("[data-name-slide]");
-      if (slide instanceof HTMLElement) bindScrollAnimation(slide, "name-slide-scroll", range);
-      bindScrollAnimation(title, "name-source-scroll", range);
-      bindScrollAnimation(brand, "name-brand-scroll", range);
+      if (!scrollOn || !scrollStyle) return;
+      const range = title.dataset.flightRange ?? "";
+      title.setAttribute("data-name-flight", "scroll");
+      brand.setAttribute("data-name-flight", "scroll");
+      setFlightRange(title, range);
+      setFlightRange(brand, range);
+      const bar = navBar();
+      if (bar) {
+        bar.setAttribute("data-name-flight", "scroll");
+        setFlightRange(bar, range);
+      }
+      const slide = nameSlide();
+      if (slide && scrollStyle.textContent.includes("name-slide-scroll")) {
+        slide.setAttribute("data-name-slide", "on");
+        setFlightRange(slide, range);
+      }
       title.style.opacity = "";
       brand.classList.remove(styles.visible);
       clearRig();
@@ -500,7 +528,8 @@ export default function Nav(): React.ReactElement {
         scrollOn = false;
         return;
       }
-      if (scrollShell && scrollKey !== "") return;
+      const motion = motionApi;
+      if (scrollKey !== "") return;
       measureTitleRest();
       const y = window.scrollY;
       const aboutArrive = about.getBoundingClientRect().top + y;
@@ -515,7 +544,6 @@ export default function Nav(): React.ReactElement {
         Math.round(brandRect.width),
         Math.round(brandRect.left),
       ].join(":");
-      if (key === scrollKey && scrollShell) return;
       if (end - start < 2 || brandRect.width < 2) return;
 
       const frameEl = section.querySelector(".scene-scale");
@@ -533,6 +561,11 @@ export default function Nav(): React.ReactElement {
         cardAnimation: cardNode?.style.animation ?? "",
         cardTransform: cardNode?.style.transform ?? "",
       };
+      const flightAttr = title.getAttribute("data-name-flight");
+      const slideNode = title.querySelector("[data-name-slide]");
+      const slideEl = slideNode instanceof HTMLElement ? slideNode : null;
+      if (flightAttr !== null) title.removeAttribute("data-name-flight");
+      if (slideEl) slideEl.removeAttribute("data-name-slide");
       section.style.position = "relative";
       section.style.top = "0px";
       if (stickyNode) stickyNode.style.position = "relative";
@@ -545,6 +578,7 @@ export default function Nav(): React.ReactElement {
         cardNode.style.transform = "none";
       }
       const natural = title.getBoundingClientRect();
+      const cardRect = cardNode?.getBoundingClientRect() ?? natural;
       section.style.position = previous.sectionPosition;
       section.style.top = previous.sectionTop;
       if (stickyNode) stickyNode.style.position = previous.stickyPosition;
@@ -556,21 +590,43 @@ export default function Nav(): React.ReactElement {
         cardNode.style.animation = previous.cardAnimation;
         cardNode.style.transform = previous.cardTransform;
       }
+      if (flightAttr !== null) title.setAttribute("data-name-flight", flightAttr);
+      if (slideEl) slideEl.setAttribute("data-name-slide", "on");
       if (natural.width < 2 || natural.height < 2) return;
 
+      const localCx = natural.left + natural.width / 2 - cardRect.left;
+      const localCy = natural.top + natural.height / 2 - cardRect.top;
       const restTop = natural.top + y;
       const view = frameNode?.offsetHeight || window.innerHeight;
       const content = cardNode?.offsetHeight ?? view;
       const extra = Math.max(0, content - view);
-      const pinSpan = Math.max(1, end - Math.max(0, end - view));
-      const pinP = clamp01((start - Math.max(0, end - view)) / pinSpan);
-      const riseP = extra > 1 ? clamp01(start / extra) : 0;
-      const sc = 1 - 0.1 * pinP;
-      const ty = -extra * riseP;
+      const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      const rangeOf = (node: HTMLElement | null): { start: number; end: number } => {
+        const raw = node ? getComputedStyle(node).getPropertyValue("animation-range") : "";
+        const parts = raw.split(/\s+/).filter((part: string) => part.endsWith("%"));
+        if (parts.length >= 2) {
+          const startPx = (Number.parseFloat(parts[0]) / 100) * maxScroll;
+          const endPx = (Number.parseFloat(parts[1]) / 100) * maxScroll;
+          if (endPx > startPx) return { start: startPx, end: endPx };
+        }
+        return { start: 0, end: maxScroll };
+      };
+      const pinRange = frameNode?.getAttribute("data-pin") === "on" ? rangeOf(frameNode) : null;
+      const riseRange = cardNode?.getAttribute("data-rise") === "on" ? rangeOf(cardNode) : null;
+      const pinScale = (scroll: number): number => {
+        if (!pinRange) return 1;
+        return 1 - 0.1 * clamp01((scroll - pinRange.start) / (pinRange.end - pinRange.start));
+      };
+      const cardShift = (scroll: number): number => {
+        if (!riseRange || extra < 1) return 0;
+        return -extra * clamp01((scroll - riseRange.start) / (riseRange.end - riseRange.start));
+      };
+      const sc = pinScale(start);
+      const shift = cardShift(start);
       const ox = window.innerWidth / 2;
       const oy = view / 2;
       const cx = natural.left + natural.width / 2;
-      const cy = restTop + natural.height / 2 + ty;
+      const cy = restTop + natural.height / 2 + shift;
       const vx = ox + (cx - ox) * sc;
       const vy = oy + (cy - oy) * sc;
       const from: Box = {
@@ -604,74 +660,41 @@ export default function Nav(): React.ReactElement {
       const fitY = dest.height / natural.height;
       const holdX = lerp(0.86, 0.36, 0.5);
       const span = end - start;
-      const placed = (percent: number, tx: number, ty: number, scaleX: number, scaleY: number, opacity: number): string => {
-        const lift = (percent / 100) * span;
-        return `${percent}% { transform: translate3d(${tx.toFixed(2)}px, ${(ty + lift).toFixed(2)}px, 0) scale(${scaleX.toFixed(4)}, ${scaleY.toFixed(4)}); opacity: ${opacity}; }`;
-      };
-      const samples: string[] = [];
-      const steps = 16;
-      for (let i = 0; i <= steps; i += 1) {
-        const p = (i / steps) * FLIGHT_END;
-        const flight = p / FLIGHT_END;
+      const pose = (percent: number): string => {
+        const p = percent / 100;
+        const flight = clamp01(p / FLIGHT_END);
+        const scroll = start + p * span;
         const compress = clamp01(flight / 0.22);
         const travel = clamp01((flight - 0.22) / 0.56);
         const settle = clamp01((flight - 0.78) / 0.22);
         const along = Math.min(1, travel * (1 + CENTER_LEAD));
-        const onPath = motionApi.getPositionOnPath(path, along);
+        const onPath = motion.getPositionOnPath(path, along);
         const x = travel === 0 ? fromCx : lerp(onPath.x, destCx, settle);
         const py = travel === 0 ? fromCy : lerp(onPath.y, destCy, settle);
         const arrive = travel <= 0.45 ? 0 : (travel - 0.45) / 0.55;
         const squeeze = Math.max(settle, arrive);
-        const scaleX = lerp(lerp(sc, sc * holdX, compress), fitX, squeeze);
-        const scaleY = lerp(lerp(sc, sc * SQUASH, compress), fitY, squeeze);
-        const tx = x - fromCx;
-        const ty = py - fromCy;
-        if (i === 0) {
-          samples.push(placed(0, tx, ty, scaleX, scaleY, 0));
-          samples.push(placed(1, tx, ty, scaleX, scaleY, 1));
-        } else {
-          samples.push(placed(Number((p * 100).toFixed(2)), tx, ty, scaleX, scaleY, 1));
-        }
-      }
-      const endX = destCx - fromCx;
-      const endY = destCy - fromCy;
-      samples.push(placed(97, endX, endY, fitX, fitY, 1));
-      samples.push(placed(100, endX, endY, fitX, fitY, 0));
+        const visualX = lerp(lerp(sc, sc * holdX, compress), fitX, squeeze);
+        const visualY = lerp(lerp(sc, sc * SQUASH, compress), fitY, squeeze);
+        const cardTy = cardShift(scroll);
+        const parentScale = pinScale(scroll);
+        const frameX = ox + (x - ox) / parentScale;
+        const frameY = oy + (py - oy) / parentScale;
+        const tx = frameX - localCx;
+        const ty = frameY - cardTy - localCy;
+        const opacity = percent >= 100 ? 0 : 1;
+        return `${percent}% { transform: translate3d(${tx.toFixed(2)}px, ${ty.toFixed(2)}px, 0) scale(${(visualX / parentScale).toFixed(4)}, ${(visualY / parentScale).toFixed(4)}); opacity: ${opacity}; }`;
+      };
+      const marks = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 99, 100];
+      const samples = marks.map((percent) => pose(percent));
 
-      if (!scrollShell) {
-        scrollShell = document.createElement("div");
-        scrollShell.setAttribute("aria-hidden", "true");
-        scrollShell.dataset.scrollFlight = "on";
-        document.body.appendChild(scrollShell);
-      }
-      scrollShell.replaceChildren();
-      const clone = title.cloneNode(true);
-      if (!(clone instanceof HTMLElement)) return;
-      clone.style.margin = "0";
-      clone.style.width = "100%";
-      clone.style.transform = "none";
-      clone.style.color = FLIGHT_COLOR;
-      clone.style.setProperty("-webkit-text-fill-color", FLIGHT_COLOR);
-      scrollShell.appendChild(clone);
-      const slideSpan = clone.querySelectorAll("span")[1];
-      const firstSpanEl = clone.querySelector("span");
+      const slideSpan = nameSlide();
+      const firstSpanEl = title.querySelector("span");
       const slideX = firstSpanEl instanceof HTMLElement ? firstSpanEl.offsetWidth + 8 : 0;
       const slideY = slideSpan instanceof HTMLElement ? -slideSpan.offsetTop : 0;
-      if (slideSpan instanceof HTMLElement) slideSpan.dataset.nameSlide = "on";
 
       const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
       const range = `${((start / max) * 100).toFixed(3)}% ${((end / max) * 100).toFixed(3)}%`;
-      scrollShell.dataset.range = range;
-      scrollShell.style.position = "absolute";
-      scrollShell.style.left = `${from.left}px`;
-      scrollShell.style.top = `${from.top + start}px`;
-      scrollShell.style.zIndex = "60";
-      scrollShell.style.width = `${natural.width}px`;
-      scrollShell.style.margin = "0";
-      scrollShell.style.pointerEvents = "none";
-      scrollShell.style.transformOrigin = "50% 50%";
-      scrollShell.style.willChange = "transform, opacity";
-      scrollShell.style.visibility = "visible";
+      title.dataset.flightRange = range;
 
       if (!scrollStyle) {
         scrollStyle = document.createElement("style");
@@ -681,17 +704,25 @@ export default function Nav(): React.ReactElement {
         ? `@keyframes name-slide-scroll {
             0%, 80% { transform: translate3d(0, 0, 0); }
             89% { transform: translate3d(${slideX.toFixed(2)}px, 0, 0); }
-            97%, 100% { transform: translate3d(${slideX.toFixed(2)}px, ${slideY.toFixed(2)}px, 0); }
+            99%, 100% { transform: translate3d(${slideX.toFixed(2)}px, ${slideY.toFixed(2)}px, 0); }
           }`
         : "";
       scrollStyle.textContent = `@keyframes name-flight-scroll { ${samples.join(" ")} }
-        @keyframes name-source-scroll { 0% { opacity: 1; } 1% { opacity: 0; } 100% { opacity: 0; } }
-        @keyframes name-brand-scroll { 0%, 97% { opacity: 0; pointer-events: none; } 100% { opacity: 1; pointer-events: auto; } }
+        @keyframes name-brand-scroll { 0%, 99% { opacity: 0; pointer-events: none; } 100% { opacity: 1; pointer-events: auto; } }
         ${slideBlock}`;
-      bindScrollAnimation(scrollShell, "name-flight-scroll", range);
-      if (slideSpan instanceof HTMLElement) bindScrollAnimation(slideSpan, "name-slide-scroll", range);
-      bindScrollAnimation(title, "name-source-scroll", range);
-      bindScrollAnimation(brand, "name-brand-scroll", range);
+      title.setAttribute("data-name-flight", "scroll");
+      brand.setAttribute("data-name-flight", "scroll");
+      setFlightRange(title, range);
+      setFlightRange(brand, range);
+      const bar = navBar();
+      if (bar) {
+        bar.setAttribute("data-name-flight", "scroll");
+        setFlightRange(bar, range);
+      }
+      if (slideSpan instanceof HTMLElement) {
+        slideSpan.setAttribute("data-name-slide", "on");
+        setFlightRange(slideSpan, range);
+      }
       title.style.opacity = "";
       scrollKey = key;
       scrollOn = true;
@@ -856,11 +887,22 @@ export default function Nav(): React.ReactElement {
       flightGen += 1;
       jumpTween?.kill();
       title.style.opacity = "";
-      clearScrollAnimation(title);
-      clearScrollAnimation(brand);
+      title.removeAttribute("data-name-flight");
+      brand.removeAttribute("data-name-flight");
+      clearFlightRange(title);
+      clearFlightRange(brand);
+      const bar = navBar();
+      if (bar) {
+        bar.removeAttribute("data-name-flight");
+        clearFlightRange(bar);
+      }
+      const slide = nameSlide();
+      if (slide) {
+        slide.removeAttribute("data-name-slide");
+        clearFlightRange(slide);
+      }
       linkList.style.transform = "";
       clearRig();
-      scrollShell?.remove();
       scrollStyle?.remove();
       flyer.remove();
     };
