@@ -126,6 +126,10 @@ export default function Nav(): React.ReactElement {
     let nameLock = false;
     let flightGen = 0;
     let jumpTween: { kill: () => void } | null = null;
+    let scrollShell: HTMLDivElement | null = null;
+    let scrollStyle: HTMLStyleElement | null = null;
+    let scrollKey = "";
+    let scrollOn = false;
     const sequence = { p: 0 };
 
     const clearRig = (): void => {
@@ -145,14 +149,45 @@ export default function Nav(): React.ReactElement {
     const measureTitleRest = (): void => {
       if (measuring) return;
       measuring = true;
-      const previousPosition = section.style.position;
-      const previousTop = section.style.top;
+      const sticky = section.querySelector(".scene-sticky");
+      const frameNode = section.querySelector(".scene-scale");
+      const cardNode = section.querySelector(".scene-card");
+      const stickyNode = sticky instanceof HTMLElement ? sticky : null;
+      const frame = frameNode instanceof HTMLElement ? frameNode : null;
+      const card = cardNode instanceof HTMLElement ? cardNode : null;
+      const previous = {
+        sectionPosition: section.style.position,
+        sectionTop: section.style.top,
+        stickyPosition: stickyNode?.style.position ?? "",
+        frameAnimation: frame?.style.animation ?? "",
+        frameTransform: frame?.style.transform ?? "",
+        cardAnimation: card?.style.animation ?? "",
+        cardTransform: card?.style.transform ?? "",
+      };
       section.style.position = "relative";
       section.style.top = "0px";
+      if (stickyNode) stickyNode.style.position = "relative";
+      if (frame) {
+        frame.style.animation = "none";
+        frame.style.transform = "none";
+      }
+      if (card) {
+        card.style.animation = "none";
+        card.style.transform = "none";
+      }
       const rect = title.getBoundingClientRect();
       titleRestBottom = rect.bottom + window.scrollY;
-      section.style.position = previousPosition;
-      section.style.top = previousTop;
+      section.style.position = previous.sectionPosition;
+      section.style.top = previous.sectionTop;
+      if (stickyNode) stickyNode.style.position = previous.stickyPosition;
+      if (frame) {
+        frame.style.animation = previous.frameAnimation;
+        frame.style.transform = previous.frameTransform;
+      }
+      if (card) {
+        card.style.animation = previous.cardAnimation;
+        card.style.transform = previous.cardTransform;
+      }
       measuring = false;
     };
 
@@ -394,6 +429,13 @@ export default function Nav(): React.ReactElement {
       placeSpan(lastSpan, slideSrc.last, dest.last, slide, true);
     };
 
+    const showJumpShell = (progress: number): void => {
+      const arrived = progress >= 0.999;
+      const show = !arrived;
+      if (flightTitle) flightTitle.style.visibility = show ? "visible" : "hidden";
+      if (!scrollOn) flyer.style.visibility = show ? "visible" : "hidden";
+    };
+
     const renderFlight = (progress: number, jump: boolean): void => {
       const flight = clamp01(progress / FLIGHT_END);
       const slide = clamp01((progress - FLIGHT_END) / (1 - FLIGHT_END));
@@ -404,12 +446,255 @@ export default function Nav(): React.ReactElement {
       if (jump) {
         title.style.opacity = "0";
         brand.classList.toggle(styles.visible, arrived);
-        flyer.style.visibility = arrived ? "hidden" : "visible";
+        showJumpShell(progress);
         return;
       }
       title.style.opacity = progress > 0 ? "0" : "";
       brand.classList.toggle(styles.visible, arrived);
-      flyer.style.visibility = progress > 0 && !arrived ? "visible" : "hidden";
+      showJumpShell(progress);
+    };
+
+    const scrollTimeline = (): boolean =>
+      typeof CSS !== "undefined" &&
+      CSS.supports("animation-timeline: scroll()") &&
+      CSS.supports("animation-range: 0% 100%");
+
+    const bindScrollAnimation = (el: HTMLElement, name: string, range: string): void => {
+      el.style.animationName = name;
+      el.style.animationDuration = "auto";
+      el.style.animationTimingFunction = "linear";
+      el.style.animationFillMode = "both";
+      el.style.setProperty("animation-timeline", "scroll(root block)");
+      el.style.setProperty("animation-range", range);
+    };
+
+    const clearScrollAnimation = (el: HTMLElement): void => {
+      el.style.animationName = "none";
+    };
+
+    const suspendScrollFlight = (): void => {
+      if (!scrollOn || !scrollShell) return;
+      scrollShell.style.visibility = "hidden";
+      clearScrollAnimation(scrollShell);
+      const slide = scrollShell.querySelector("[data-name-slide]");
+      if (slide instanceof HTMLElement) clearScrollAnimation(slide);
+      clearScrollAnimation(title);
+      clearScrollAnimation(brand);
+    };
+
+    const resumeScrollFlight = (): void => {
+      if (!scrollOn || !scrollShell || !scrollStyle) return;
+      const range = scrollShell.dataset.range ?? "";
+      scrollShell.style.visibility = "visible";
+      flyer.style.visibility = "visible";
+      bindScrollAnimation(scrollShell, "name-flight-scroll", range);
+      const slide = scrollShell.querySelector("[data-name-slide]");
+      if (slide instanceof HTMLElement) bindScrollAnimation(slide, "name-slide-scroll", range);
+      bindScrollAnimation(title, "name-source-scroll", range);
+      bindScrollAnimation(brand, "name-brand-scroll", range);
+      title.style.opacity = "";
+      brand.classList.remove(styles.visible);
+      clearRig();
+    };
+
+    const installScrollFlight = (): void => {
+      if (!scrollTimeline() || reducedQuery.matches || !gsapApi || !motionApi) {
+        scrollOn = false;
+        return;
+      }
+      if (scrollShell && scrollKey !== "") return;
+      measureTitleRest();
+      const y = window.scrollY;
+      const aboutArrive = about.getBoundingClientRect().top + y;
+      const start = Math.max(0, aboutArrive - titleRestBottom);
+      const end = aboutArrive;
+      const brandRect = brand.getBoundingClientRect();
+      const key = [
+        window.innerWidth,
+        window.innerHeight,
+        Math.round(start),
+        Math.round(end),
+        Math.round(brandRect.width),
+        Math.round(brandRect.left),
+      ].join(":");
+      if (key === scrollKey && scrollShell) return;
+      if (end - start < 2 || brandRect.width < 2) return;
+
+      const frameEl = section.querySelector(".scene-scale");
+      const cardEl = section.querySelector(".scene-card");
+      const sticky = section.querySelector(".scene-sticky");
+      const frameNode = frameEl instanceof HTMLElement ? frameEl : null;
+      const cardNode = cardEl instanceof HTMLElement ? cardEl : null;
+      const stickyNode = sticky instanceof HTMLElement ? sticky : null;
+      const previous = {
+        sectionPosition: section.style.position,
+        sectionTop: section.style.top,
+        stickyPosition: stickyNode?.style.position ?? "",
+        frameAnimation: frameNode?.style.animation ?? "",
+        frameTransform: frameNode?.style.transform ?? "",
+        cardAnimation: cardNode?.style.animation ?? "",
+        cardTransform: cardNode?.style.transform ?? "",
+      };
+      section.style.position = "relative";
+      section.style.top = "0px";
+      if (stickyNode) stickyNode.style.position = "relative";
+      if (frameNode) {
+        frameNode.style.animation = "none";
+        frameNode.style.transform = "none";
+      }
+      if (cardNode) {
+        cardNode.style.animation = "none";
+        cardNode.style.transform = "none";
+      }
+      const natural = title.getBoundingClientRect();
+      section.style.position = previous.sectionPosition;
+      section.style.top = previous.sectionTop;
+      if (stickyNode) stickyNode.style.position = previous.stickyPosition;
+      if (frameNode) {
+        frameNode.style.animation = previous.frameAnimation;
+        frameNode.style.transform = previous.frameTransform;
+      }
+      if (cardNode) {
+        cardNode.style.animation = previous.cardAnimation;
+        cardNode.style.transform = previous.cardTransform;
+      }
+      if (natural.width < 2 || natural.height < 2) return;
+
+      const restTop = natural.top + y;
+      const view = frameNode?.offsetHeight || window.innerHeight;
+      const content = cardNode?.offsetHeight ?? view;
+      const extra = Math.max(0, content - view);
+      const pinSpan = Math.max(1, end - Math.max(0, end - view));
+      const pinP = clamp01((start - Math.max(0, end - view)) / pinSpan);
+      const riseP = extra > 1 ? clamp01(start / extra) : 0;
+      const sc = 1 - 0.1 * pinP;
+      const ty = -extra * riseP;
+      const ox = window.innerWidth / 2;
+      const oy = view / 2;
+      const cx = natural.left + natural.width / 2;
+      const cy = restTop + natural.height / 2 + ty;
+      const vx = ox + (cx - ox) * sc;
+      const vy = oy + (cy - oy) * sc;
+      const from: Box = {
+        left: vx - natural.width / 2,
+        top: vy - natural.height / 2,
+        width: natural.width,
+        height: natural.height,
+      };
+      const dest: Box = {
+        left: brandRect.left,
+        top: brandRect.top,
+        width: brandRect.width,
+        height: brandRect.height,
+      };
+      const fromCx = vx;
+      const fromCy = vy;
+      const destCx = dest.left + dest.width / 2;
+      const destCy = dest.top + dest.height / 2;
+      const mid = bowPoint(from, dest);
+      const path = motionApi.arrayToRawPath(
+        [
+          { x: fromCx, y: fromCy },
+          { x: mid.x, y: mid.y },
+          { x: destCx, y: destCy },
+        ],
+        { curviness: 0.7 },
+      );
+      motionApi.cacheRawPathMeasurements(path);
+
+      const fitX = dest.width / natural.width;
+      const fitY = dest.height / natural.height;
+      const holdX = lerp(0.86, 0.36, 0.5);
+      const samples: string[] = [];
+      const steps = 16;
+      for (let i = 0; i <= steps; i += 1) {
+        const p = (i / steps) * FLIGHT_END;
+        const flight = p / FLIGHT_END;
+        const compress = clamp01(flight / 0.22);
+        const travel = clamp01((flight - 0.22) / 0.56);
+        const settle = clamp01((flight - 0.78) / 0.22);
+        const along = Math.min(1, travel * (1 + CENTER_LEAD));
+        const onPath = motionApi.getPositionOnPath(path, along);
+        const x = travel === 0 ? fromCx : lerp(onPath.x, destCx, settle);
+        const py = travel === 0 ? fromCy : lerp(onPath.y, destCy, settle);
+        const arrive = travel <= 0.45 ? 0 : (travel - 0.45) / 0.55;
+        const squeeze = Math.max(settle, arrive);
+        const scaleX = lerp(lerp(sc, sc * holdX, compress), fitX, squeeze);
+        const scaleY = lerp(lerp(sc, sc * SQUASH, compress), fitY, squeeze);
+        const transform = `translate3d(${(x - fromCx).toFixed(2)}px, ${(py - fromCy).toFixed(2)}px, 0) scale(${scaleX.toFixed(4)}, ${scaleY.toFixed(4)})`;
+        if (i === 0) {
+          samples.push(`0% { transform: ${transform}; opacity: 0; }`);
+          samples.push(`1% { transform: ${transform}; opacity: 1; }`);
+        } else {
+          samples.push(`${(p * 100).toFixed(2)}% { transform: ${transform}; opacity: 1; }`);
+        }
+      }
+      const endX = destCx - fromCx;
+      const endY = destCy - fromCy;
+      samples.push(
+        `97% { transform: translate3d(${endX.toFixed(2)}px, ${endY.toFixed(2)}px, 0) scale(${fitX.toFixed(4)}, ${fitY.toFixed(4)}); opacity: 1; }`,
+      );
+      samples.push(
+        `100% { transform: translate3d(${endX.toFixed(2)}px, ${endY.toFixed(2)}px, 0) scale(${fitX.toFixed(4)}, ${fitY.toFixed(4)}); opacity: 0; }`,
+      );
+
+      if (!scrollShell) {
+        scrollShell = document.createElement("div");
+        scrollShell.setAttribute("aria-hidden", "true");
+        scrollShell.dataset.scrollFlight = "on";
+        flyer.appendChild(scrollShell);
+      }
+      scrollShell.replaceChildren();
+      const clone = title.cloneNode(true);
+      if (!(clone instanceof HTMLElement)) return;
+      clone.style.margin = "0";
+      clone.style.width = "100%";
+      clone.style.transform = "none";
+      clone.style.color = FLIGHT_COLOR;
+      clone.style.setProperty("-webkit-text-fill-color", FLIGHT_COLOR);
+      scrollShell.appendChild(clone);
+      const slideSpan = clone.querySelectorAll("span")[1];
+      const firstSpanEl = clone.querySelector("span");
+      const slideX = firstSpanEl instanceof HTMLElement ? firstSpanEl.offsetWidth + 8 : 0;
+      const slideY = slideSpan instanceof HTMLElement ? -slideSpan.offsetTop : 0;
+      if (slideSpan instanceof HTMLElement) slideSpan.dataset.nameSlide = "on";
+
+      const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      const range = `${((start / max) * 100).toFixed(3)}% ${((end / max) * 100).toFixed(3)}%`;
+      scrollShell.dataset.range = range;
+      scrollShell.style.position = "fixed";
+      scrollShell.style.left = `${from.left}px`;
+      scrollShell.style.top = `${from.top}px`;
+      scrollShell.style.width = `${natural.width}px`;
+      scrollShell.style.margin = "0";
+      scrollShell.style.pointerEvents = "none";
+      scrollShell.style.transformOrigin = "50% 50%";
+      scrollShell.style.willChange = "transform, opacity";
+      scrollShell.style.visibility = "visible";
+      flyer.style.visibility = "visible";
+
+      if (!scrollStyle) {
+        scrollStyle = document.createElement("style");
+        document.head.appendChild(scrollStyle);
+      }
+      const slideBlock = slideSpan instanceof HTMLElement
+        ? `@keyframes name-slide-scroll {
+            0%, 80% { transform: translate3d(0, 0, 0); }
+            89% { transform: translate3d(${slideX.toFixed(2)}px, 0, 0); }
+            97%, 100% { transform: translate3d(${slideX.toFixed(2)}px, ${slideY.toFixed(2)}px, 0); }
+          }`
+        : "";
+      scrollStyle.textContent = `@keyframes name-flight-scroll { ${samples.join(" ")} }
+        @keyframes name-source-scroll { 0% { opacity: 1; } 1% { opacity: 0; } 100% { opacity: 0; } }
+        @keyframes name-brand-scroll { 0%, 97% { opacity: 0; pointer-events: none; } 100% { opacity: 1; pointer-events: auto; } }
+        ${slideBlock}`;
+      bindScrollAnimation(scrollShell, "name-flight-scroll", range);
+      if (slideSpan instanceof HTMLElement) bindScrollAnimation(slideSpan, "name-slide-scroll", range);
+      bindScrollAnimation(title, "name-source-scroll", range);
+      bindScrollAnimation(brand, "name-brand-scroll", range);
+      title.style.opacity = "";
+      scrollKey = key;
+      scrollOn = true;
     };
 
     const releaseNameFlight = (): void => {
@@ -417,6 +702,7 @@ export default function Nav(): React.ReactElement {
       jumpTween?.kill();
       jumpTween = null;
       nameLock = false;
+      resumeScrollFlight();
       apply();
     };
 
@@ -437,8 +723,12 @@ export default function Nav(): React.ReactElement {
         width: destRect.width,
         height: destRect.height,
       };
+      suspendScrollFlight();
       ensureRig(from, dest);
-      if (!timeline) return;
+      if (!timeline) {
+        resumeScrollFlight();
+        return;
+      }
       flightGen += 1;
       const generation = flightGen;
       jumpTween?.kill();
@@ -486,6 +776,9 @@ export default function Nav(): React.ReactElement {
       if (nameLock) return;
 
       const reduced = reducedQuery.matches;
+      if (!reduced && gsapApi && motionApi) installScrollFlight();
+      if (scrollOn && !reduced) return;
+
       const flying = !reduced && progress > 0 && progress < 1 && fromBox !== null && gsapApi !== null;
       if (flying && fromBox) {
         const dest = brand.getBoundingClientRect();
@@ -513,6 +806,7 @@ export default function Nav(): React.ReactElement {
       measureTitleRest();
       fromBox = null;
       clearRig();
+      scrollKey = "";
       onScroll();
     };
 
@@ -561,8 +855,12 @@ export default function Nav(): React.ReactElement {
       flightGen += 1;
       jumpTween?.kill();
       title.style.opacity = "";
+      title.style.animationName = "";
+      brand.style.animationName = "";
       linkList.style.transform = "";
       clearRig();
+      scrollShell?.remove();
+      scrollStyle?.remove();
       flyer.remove();
     };
   }, []);

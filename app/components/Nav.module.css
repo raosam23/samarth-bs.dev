@@ -43,6 +43,7 @@
   pointer-events: auto;
 }
 
+.brand:hover,
 .brand.visible:hover {
   color: var(--accent-soft);
 }
