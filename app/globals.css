@@ -165,15 +165,18 @@ section.scene {
 }
 
 #top h1[data-name-flight="scroll"] {
-  animation: name-flight-scroll auto linear both;
+  animation: name-hero-hide auto linear forwards;
   animation-timeline: scroll(root block);
-  transform-origin: center center;
 }
 
-#top h1[data-name-flight="scroll"] [data-name-slide] {
-  animation: name-slide-scroll auto linear both;
+[data-name-piece="first"][data-name-flight="scroll"] {
+  animation: name-first-scroll auto linear forwards;
   animation-timeline: scroll(root block);
-  transform-origin: 0 0;
+}
+
+[data-name-piece="last"][data-name-flight="scroll"] {
+  animation: name-last-scroll auto linear forwards;
+  animation-timeline: scroll(root block);
 }
 
 nav a[data-name-flight="scroll"] {
@@ -181,26 +184,19 @@ nav a[data-name-flight="scroll"] {
   animation-timeline: scroll(root block);
 }
 
-@keyframes name-nav-scroll {
-  0%, 99% {
-    background-color: transparent;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border-bottom-color: transparent;
-  }
-  100% {
-    background-color: rgba(11, 7, 18, 0.65);
-    backdrop-filter: blur(20px) saturate(140%);
-    -webkit-backdrop-filter: blur(20px) saturate(140%);
-    border-bottom-color: var(--border-soft);
-  }
+nav[data-name-flight="scroll"]::before {
+  animation: name-bar-scroll auto linear both;
+  animation-timeline: scroll(root block);
+  animation-range: var(--name-flight-range);
 }
 
-@media (max-width: 720px) {
-  nav[data-name-flight="scroll"] {
-    animation: name-nav-scroll auto linear backwards;
-    animation-timeline: scroll(root block);
-  }
+@keyframes name-hero-hide {
+  from, to { visibility: hidden; }
+}
+
+@keyframes name-bar-scroll {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .scene-dim {
@@ -243,9 +239,9 @@ html.scene-fallback .scene-scale,
 html.scene-fallback .scene-card,
 html.scene-fallback .scene-dim,
 html.scene-fallback #top h1[data-name-flight="scroll"],
-html.scene-fallback #top h1[data-name-flight="scroll"] [data-name-slide],
+html.scene-fallback [data-name-piece][data-name-flight="scroll"],
 html.scene-fallback nav a[data-name-flight="scroll"],
-html.scene-fallback nav[data-name-flight="scroll"] {
+html.scene-fallback nav[data-name-flight="scroll"]::before {
   animation: none !important;
 }
 

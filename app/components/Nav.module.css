@@ -5,15 +5,32 @@
   right: 0;
   z-index: 50;
   padding: 18px 0;
-  transition: backdrop-filter 0.3s ease, background 0.3s ease, border-color 0.3s ease;
   border-bottom: 1px solid transparent;
 }
 
-.scrolled {
+.nav::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  z-index: -1;
+  pointer-events: none;
   backdrop-filter: blur(20px) saturate(140%);
   -webkit-backdrop-filter: blur(20px) saturate(140%);
   background: rgba(11, 7, 18, 0.65);
-  border-bottom-color: var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
+  opacity: var(--name-bar, 0);
+  transition: opacity 0.3s ease;
+}
+
+.scrolled::before {
+  opacity: var(--name-bar, 1);
+}
+
+.nav[data-name-jump]::before {
+  transition: none;
 }
 
 .inner {
@@ -111,4 +128,27 @@
   margin: 0;
   pointer-events: none;
   transform-origin: center center;
+}
+
+.flightLayer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.flightPiece {
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
+  white-space: pre;
+  visibility: hidden;
+  pointer-events: none;
+  will-change: transform;
+  color: rgb(245, 243, 255);
+  -webkit-text-fill-color: rgb(245, 243, 255);
+  filter: none;
+  mix-blend-mode: normal;
 }
