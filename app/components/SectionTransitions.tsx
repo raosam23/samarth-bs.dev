@@ -40,6 +40,12 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
+const TOOLBAR_DELTA = 160;
+
+function coarsePointer(): boolean {
+  return navigator.maxTouchPoints > 0 || window.matchMedia("(pointer: coarse)").matches;
+}
+
 function supportsScrollTimeline(): boolean {
   return (
     typeof CSS !== "undefined" &&
@@ -139,11 +145,10 @@ export default function SectionTransitions(): null {
         section.style.marginBottom = last ? "" : `${-view}px`;
       });
       tops = sections.map((section) => layoutTop(section));
-      const max = Math.max(1, document.documentElement.scrollHeight - viewport);
       const nextPins: PinTarget[] = [];
       const nextRises: RiseTarget[] = [];
-      const percent = (start: number, end: number): string =>
-        `${(start / max) * 100}% ${(end / max) * 100}%`;
+      const pixels = (start: number, end: number): string =>
+        `${Math.round(start * 100) / 100}px ${Math.round(end * 100) / 100}px`;
 
       sections.forEach((section, index) => {
         const card = cardOf(section);
@@ -157,7 +162,7 @@ export default function SectionTransitions(): null {
           card.style.setProperty("--scene-rise", `${-extra}px`);
           card.setAttribute("data-rise", "on");
           if (timeline) {
-            card.style.setProperty("animation-range", percent(sectionTop, sectionTop + extra));
+            card.style.setProperty("animation-range", pixels(sectionTop, sectionTop + extra));
           } else {
             card.style.removeProperty("animation-range");
             nextRises.push({ card, top: sectionTop, extra });
@@ -177,10 +182,10 @@ export default function SectionTransitions(): null {
           return;
         }
         const end = nextTop;
-        const start = Math.max(0, end - viewport);
+        const start = Math.max(0, end - view);
         frame.setAttribute("data-pin", "on");
         if (timeline) {
-          const range = percent(start, end);
+          const range = pixels(start, end);
           frame.style.setProperty("animation-range", range);
           dim.style.setProperty("animation-range", range);
         } else {
@@ -549,7 +554,14 @@ export default function SectionTransitions(): null {
       navigate(isSectionId(raw) ? raw : "top", false);
     };
 
+    let laidWidth = window.innerWidth;
+    let laidHeight = window.innerHeight;
     const onResize = (): void => {
+      const widthChanged = window.innerWidth !== laidWidth;
+      const heightShift = Math.abs(window.innerHeight - laidHeight);
+      if (!widthChanged && heightShift < TOOLBAR_DELTA && coarsePointer()) return;
+      laidWidth = window.innerWidth;
+      laidHeight = window.innerHeight;
       layoutPins();
     };
 

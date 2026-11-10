@@ -144,7 +144,7 @@
   top: 0;
   margin: 0;
   white-space: pre;
-  visibility: hidden;
+  transform: scale(0);
   pointer-events: none;
   will-change: transform;
   color: rgb(245, 243, 255);

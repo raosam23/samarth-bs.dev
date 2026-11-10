@@ -16,6 +16,8 @@ const CENTER_LEAD = 0.08;
 const FLIGHT_END = 0.8;
 const FLIGHT_COLOR = "rgb(245, 243, 255)";
 const TOOLBAR_DELTA = 160;
+const HERO_LEAD_PX = 1;
+const EXIT_PX = 1;
 
 interface Box {
   left: number;
@@ -27,6 +29,13 @@ interface Box {
 interface Point {
   x: number;
   y: number;
+}
+
+interface Pose {
+  x: number;
+  y: number;
+  sx: number;
+  sy: number;
 }
 
 type MotionPlugin = typeof import("gsap/MotionPathPlugin").MotionPathPlugin;
@@ -136,9 +145,8 @@ export default function Nav(): React.ReactElement {
     let scrollStyle: HTMLStyleElement | null = null;
     let scrollKey = "";
     let scrollOn = false;
-    let flightRange = "";
-    let flightStartPx = 0;
-    let flightEndPx = 0;
+    let ranges: { hero: string; brand: string; bar: string; pieces: string } | null = null;
+    let installBlocked = false;
     let builtWidth = window.innerWidth;
     let builtHeight = window.innerHeight;
     let lastScrollAt = 0;
@@ -492,9 +500,15 @@ export default function Nav(): React.ReactElement {
     };
 
     const applyFlightRange = (): void => {
-      if (flightRange === "") return;
-      for (const el of flightTargets()) setFlightRange(el, flightRange);
-      navBar()?.style.setProperty("--name-flight-range", flightRange);
+      if (!ranges) return;
+      setFlightRange(title, ranges.hero);
+      setFlightRange(brand, ranges.brand);
+      const bar = navBar();
+      if (bar) {
+        setFlightRange(bar, ranges.bar);
+        bar.style.setProperty("--name-flight-range", ranges.bar);
+      }
+      for (const piece of pieces) setFlightRange(piece, ranges.pieces);
     };
 
     const setBarJump = (progress: number | null): void => {
@@ -532,17 +546,6 @@ export default function Nav(): React.ReactElement {
       clearRig();
     };
 
-    const flightRangeFor = (startPx: number, endPx: number): string => {
-      const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-      return `${((startPx / max) * 100).toFixed(3)}% ${((endPx / max) * 100).toFixed(3)}%`;
-    };
-
-    const refreshFlightRange = (): void => {
-      if (!scrollOn || flightEndPx <= flightStartPx) return;
-      flightRange = flightRangeFor(flightStartPx, flightEndPx);
-      applyFlightRange();
-    };
-
     const makePiece = (
       source: HTMLElement,
       role: "first" | "last",
@@ -558,13 +561,15 @@ export default function Nav(): React.ReactElement {
       el.style.letterSpacing = computed.letterSpacing;
       el.style.lineHeight = computed.lineHeight;
       el.style.textTransform = computed.textTransform;
+      el.style.transform = "none";
       flightLayer.appendChild(el);
       const glyph = glyphBox(el);
+      const host = el.getBoundingClientRect();
+      el.style.transform = "";
       if (!glyph) {
         el.remove();
         return null;
       }
-      const host = el.getBoundingClientRect();
       const center: Point = { x: glyph.left + glyph.width / 2, y: glyph.top + glyph.height / 2 };
       el.style.transformOrigin = `${center.x - host.left}px ${center.y - host.top}px`;
       return { el, center };
@@ -575,12 +580,12 @@ export default function Nav(): React.ReactElement {
         scrollOn = false;
         return;
       }
-      const motion = motionApi;
-      if (scrollKey !== "") return;
+      if (scrollKey !== "" || installBlocked) return;
       const spans = title.querySelectorAll("span");
       const firstSource = spans[0];
       const lastSource = spans[1];
       if (!(firstSource instanceof HTMLElement) || !(lastSource instanceof HTMLElement)) return;
+      installBlocked = true;
       measureTitleRest();
       const y = window.scrollY;
       const aboutArrive = about.getBoundingClientRect().top + y;
@@ -640,7 +645,14 @@ export default function Nav(): React.ReactElement {
       const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
       const rangeOf = (node: HTMLElement | null): { start: number; end: number } => {
         const raw = node ? getComputedStyle(node).getPropertyValue("animation-range") : "";
-        const percents = raw.split(/\s+/).filter((part: string) => part.endsWith("%"));
+        const parts = raw.split(/\s+/).filter((part: string) => part !== "");
+        const pixels = parts.filter((part: string) => part.endsWith("px"));
+        if (pixels.length >= 2) {
+          const startPx = Number.parseFloat(pixels[0]);
+          const endPx = Number.parseFloat(pixels[1]);
+          if (endPx > startPx) return { start: startPx, end: endPx };
+        }
+        const percents = parts.filter((part: string) => part.endsWith("%"));
         if (percents.length >= 2) {
           const startPx = (Number.parseFloat(percents[0]) / 100) * maxScroll;
           const endPx = (Number.parseFloat(percents[1]) / 100) * maxScroll;
@@ -672,7 +684,8 @@ export default function Nav(): React.ReactElement {
       const first = makePiece(firstSource, "first");
       const last = makePiece(lastSource, "last");
       if (!first || !last) {
-        removePieces();
+        first?.el.remove();
+        last?.el.remove();
         return;
       }
 
@@ -686,29 +699,13 @@ export default function Nav(): React.ReactElement {
         x: parts.last.left + parts.last.width / 2,
         y: parts.last.top + parts.last.height / 2,
       };
-      const lead: Box = {
-        left: firstFrom.x - (firstRest.width * startScale) / 2,
-        top: firstFrom.y - (firstRest.height * startScale) / 2,
-        width: firstRest.width * startScale,
-        height: firstRest.height * startScale,
-      };
-      const mid = bowPoint(lead, parts.first);
-      const path = motion.arrayToRawPath(
-        [firstFrom, { x: mid.x, y: mid.y }, firstDest],
-        { curviness: 0.7 },
-      );
-      motion.cacheRawPathMeasurements(path);
       const offset: Point = { x: lastFrom.x - firstFrom.x, y: lastFrom.y - firstFrom.y };
+      const span = end - start;
+      const flightSpan = Math.max(1, span - EXIT_PX);
 
-      const poses = (percent: number): { first: string; last: string } => {
-        const p = percent / 100;
-        const flight = clamp01(p / FLIGHT_END);
-        const slide = clamp01((p - FLIGHT_END) / (1 - FLIGHT_END));
-        const travel = clamp01((flight - 0.22) / 0.56);
-        const settle = clamp01((flight - 0.78) / 0.22);
-        const onPath = motion.getPositionOnPath(path, Math.min(1, travel * (1 + CENTER_LEAD)));
-        const leadX = travel === 0 ? firstFrom.x : lerp(onPath.x, firstDest.x, settle);
-        const leadY = travel === 0 ? firstFrom.y : lerp(onPath.y, firstDest.y, settle);
+      const poses = (flight: number, slide: number): { first: Pose; last: Pose } => {
+        const leadX = lerp(firstFrom.x, firstDest.x, flight);
+        const leadY = lerp(firstFrom.y, firstDest.y, flight);
         const firstScale = lerp(startScale, finalFirst, flight);
         const lastScale = lerp(startScale, finalLast, flight);
         const dip = 1 - (1 - SQUASH) * Math.sin(Math.PI * flight);
@@ -717,37 +714,55 @@ export default function Nav(): React.ReactElement {
         const rigidY = leadY + offset.y * grow * dip;
         const across = Math.min(1, slide / 0.5);
         const lift = Math.max(0, (slide - 0.45) / 0.55);
-        const lastX = lerp(rigidX, lastDest.x, across);
-        const lastY = lerp(rigidY, lastDest.y, lift);
-        const visibility = percent >= 100 ? "hidden" : "visible";
-        const frame = (piece: { center: Point }, x: number, py: number, scale: number): string =>
-          `transform: translate3d(${(x - piece.center.x).toFixed(2)}px, ${(py - piece.center.y).toFixed(2)}px, 0) scale(${scale.toFixed(4)}, ${(scale * dip).toFixed(4)}); visibility: ${visibility};`;
         return {
-          first: `${percent}% { ${frame(first, leadX, leadY, firstScale)} }`,
-          last: `${percent}% { ${frame(last, lastX, lastY, lastScale)} }`,
+          first: { x: leadX, y: leadY, sx: firstScale, sy: firstScale * dip },
+          last: {
+            x: lerp(rigidX, lastDest.x, across),
+            y: lerp(rigidY, lastDest.y, lift),
+            sx: lastScale,
+            sy: lastScale * dip,
+          },
         };
       };
-      const marks: number[] = [];
-      for (let i = 0; i < 50; i += 1) marks.push(i * 2);
-      marks.push(99.9, 100);
-      const samples = marks.map((percent: number) => poses(percent));
+      const stop = (percent: number, piece: { center: Point }, pose: Pose, hidden: boolean): string => {
+        const sx = hidden ? 0 : pose.sx;
+        const sy = hidden ? 0 : pose.sy;
+        return `${percent.toFixed(4)}% { transform: translate3d(${(pose.x - piece.center.x).toFixed(2)}px, ${(pose.y - piece.center.y).toFixed(2)}px, 0) scale(${sx.toFixed(4)}, ${sy.toFixed(4)}); }`;
+      };
+      const firstStops: string[] = [];
+      const lastStops: string[] = [];
+      for (let i = 0; i <= 50; i += 1) {
+        const p = i / 50;
+        const pose = poses(clamp01(p / FLIGHT_END), clamp01((p - FLIGHT_END) / (1 - FLIGHT_END)));
+        const percent = ((flightSpan * p) / span) * 100;
+        firstStops.push(stop(percent, first, pose.first, false));
+        lastStops.push(stop(percent, last, pose.last, false));
+      }
+      const landed = poses(1, 1);
+      const holdPercent = ((span - EXIT_PX * 0.4) / span) * 100;
+      firstStops.push(stop(holdPercent, first, landed.first, false), stop(100, first, landed.first, true));
+      lastStops.push(stop(holdPercent, last, landed.last, false), stop(100, last, landed.last, true));
 
-      flightStartPx = start;
-      flightEndPx = end;
-      flightRange = flightRangeFor(start, end);
+      const px = (value: number): string => `${value.toFixed(2)}px`;
+      ranges = {
+        hero: `${px(start + HERO_LEAD_PX)} ${px(start + HERO_LEAD_PX + 0.5)}`,
+        brand: `${px(end - 1)} ${px(end)}`,
+        bar: `${px(start)} ${px(end)}`,
+        pieces: `${px(start)} ${px(end)}`,
+      };
 
       if (!scrollStyle) {
         scrollStyle = document.createElement("style");
         document.head.appendChild(scrollStyle);
       }
-      scrollStyle.textContent = `@keyframes name-first-scroll { ${samples.map((s) => s.first).join(" ")} }
-        @keyframes name-last-scroll { ${samples.map((s) => s.last).join(" ")} }
-        @keyframes name-brand-scroll { 0%, 99.9% { opacity: 0; pointer-events: none; } 100% { opacity: 1; pointer-events: auto; } }`;
+      scrollStyle.textContent = `@keyframes name-first-scroll { ${firstStops.join(" ")} }
+        @keyframes name-last-scroll { ${lastStops.join(" ")} }`;
       pieces = [first.el, last.el];
       for (const el of flightTargets()) el.setAttribute("data-name-flight", "scroll");
       applyFlightRange();
       title.style.opacity = "";
-      scrollKey = [window.innerWidth, window.innerHeight, Math.round(start), Math.round(end)].join(":");
+      scrollKey = [Math.round(start), Math.round(end)].join(":");
+      installBlocked = false;
       scrollOn = true;
     };
 
@@ -881,6 +896,7 @@ export default function Nav(): React.ReactElement {
       fromBox = null;
       clearRig();
       scrollKey = "";
+      installBlocked = false;
       builtWidth = window.innerWidth;
       builtHeight = window.innerHeight;
       onScroll();
@@ -889,32 +905,22 @@ export default function Nav(): React.ReactElement {
     const isTouch = (): boolean =>
       navigator.maxTouchPoints > 0 || window.matchMedia("(pointer: coarse)").matches;
 
-    const settleFlight = (): void => {
+    const rebuildWhenIdle = (): void => {
+      window.clearTimeout(settleTimer);
+      if (performance.now() - lastScrollAt < 250) {
+        settleTimer = window.setTimeout(rebuildWhenIdle, 250);
+        return;
+      }
       settleTimer = 0;
-      if (!alive || !scrollOn || nameLock) return;
-      if (performance.now() - lastScrollAt < 200) {
-        settleTimer = window.setTimeout(settleFlight, 250);
-        return;
-      }
-      const arrive = about.getBoundingClientRect().top + window.scrollY;
-      if (Math.abs(arrive - flightEndPx) > 2) {
-        rebuildAll();
-        return;
-      }
-      refreshFlightRange();
+      rebuildAll();
     };
 
     const onResize = (force: boolean): void => {
       const heightOnly =
         window.innerWidth === builtWidth &&
         Math.abs(window.innerHeight - builtHeight) < TOOLBAR_DELTA;
-      if (!force && heightOnly && isTouch() && scrollOn && scrollKey !== "" && !nameLock) {
-        refreshFlightRange();
-        window.clearTimeout(settleTimer);
-        settleTimer = window.setTimeout(settleFlight, 250);
-        return;
-      }
-      rebuildAll();
+      if (!force && heightOnly && isTouch()) return;
+      rebuildWhenIdle();
     };
 
     const onWindowResize = (): void => onResize(false);
